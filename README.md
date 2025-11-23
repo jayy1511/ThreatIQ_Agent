@@ -1,62 +1,51 @@
-# ThreatIQ - Multi-Agent Phishing Trainer
+# ThreatIQ - Multi-Agent Phishing Detection System
 
-[![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/downloads/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.109+-green.svg)](https://fastapi.tiangolo.com/)
-[![Next.js](https://img.shields.io/badge/Next.js-14-black.svg)](https://nextjs.org/)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+AI-powered phishing detection and security training platform built with Google ADK and modern web technologies.
 
-> An AI-powered multi-agent system that teaches users to identify phishing attacks through interactive analysis and personalized coaching.
+## Overview
 
-## 🎯 Project Overview
+ThreatIQ is a capstone project demonstrating a production-ready multi-agent AI system. The platform helps users identify phishing attacks through interactive analysis and personalized coaching, using specialized AI agents that work together to provide comprehensive security training.
 
-ThreatIQ is a capstone project demonstrating multi-agent AI systems in action. It uses 5 specialized AI agents to analyze messages, provide evidence-based coaching, and track user learning progress over time.
+## Features
 
-### Features
+- **Multi-Agent Architecture** - Five specialized AI agents coordinate to analyze messages and provide coaching
+- **Real-time Analysis** - Instant phishing detection with confidence scores and detailed explanations
+- **Personalized Learning** - Adaptive coaching based on user performance and identified weak spots
+- **Evidence-Based Training** - Shows real phishing examples similar to analyzed messages
+- **Progress Tracking** - MongoDB-backed profiles track user improvement over time
+- **Interactive Quizzes** - AI-generated questions to reinforce learning
 
-- 🤖 **Multi-Agent Architecture** - Coordinated AI agents for classification, evidence gathering, memory management, and coaching
-- 🎓 **Personalized Learning** - Adaptive coaching based on user's weak spots and progress
-- 📊 **Progress Tracking** - MongoDB-backed user profiles with detailed statistics
-- 🔍 **Evidence-Based Analysis** - TF-IDF similarity search to find relevant phishing examples
-- 🎮 **Interactive Quizzes** - AI-generated quizzes to test understanding
-- 🔐 **Firebase Authentication** - Secure user authentication and authorization
-- 📱 **Modern UI** - Next.js 14 with ShadCN UI components
-
-## 🏗️ Architecture
+## Architecture
 
 ### Backend (Python + FastAPI)
 
-```
-┌─────────────────┐
-│  Orchestrator   │  ← Coordinates workflow
-└────────┬────────┘
-         │
-    ┌────┴────┐
-    ▼         ▼
-┌──────┐  ┌──────┐
-│Class │  │Evid  │  ← Specialized agents
-│-ifier│  │-ence │
-└──────┘  └──────┘
-    ▼         ▼
-┌──────┐  ┌──────┐
-│Memory│  │Coach │
-└──────┘  └──────┘
-    │         │
-    └────┬────┘
-         ▼
-    ┌─────────┐
-    │ MongoDB │  ← User profiles & logs
-    └─────────┘
-```
+Multi-agent system built with Google ADK:
 
-### Tech Stack
+- **Orchestrator Agent** - Coordinates workflow and manages sessions
+- **Classifier Agent** - Analyzes messages using Gemini AI
+- **Evidence Agent** - Searches phishing dataset for similar examples
+- **Memory Agent** - Manages user profiles and learning history
+- **Coach Agent** - Generates personalized educational content
+
+### Frontend (Next.js 14)
+
+Modern web interface with:
+
+- TypeScript for type safety
+- ShadCN UI components
+- Firebase Authentication
+- Real-time API integration
+- Responsive design
+
+## Technology Stack
 
 **Backend:**
 - Python 3.9+
 - FastAPI
-- Google Gemini AI (via google-generativeai)
+- Google ADK (Agent Development Kit)
+- Gemini 2.0 Flash
 - MongoDB Atlas
 - Firebase Admin SDK
-- scikit-learn (TF-IDF)
 
 **Frontend:**
 - Next.js 14 (App Router)
@@ -65,7 +54,89 @@ ThreatIQ is a capstone project demonstrating multi-agent AI systems in action. I
 - TailwindCSS
 - Firebase Auth
 
-## 🚀 Quick Start
+**Infrastructure:**
+- MongoDB Atlas (Database)
+- Firebase (Authentication)
+- Vercel (Frontend hosting)
+- Render/Railway (Backend hosting)
+
+## Capstone Requirements
+
+This project demonstrates:
+
+1. **Multi-agent system** - Sequential LLM-powered agents with coordination
+2. **Custom tools** - Dataset search, profile management, and interaction logging
+3. **Sessions & Memory** - InMemorySessionService pattern with MongoDB persistence
+4. **Observability** - Structured logging with session tracing
+5. **Agent evaluation** - Automated testing with accuracy metrics
+
+## Project Structure
+
+```
+ThreatIQ_Agent/
+├── backend/              # Python FastAPI backend
+│   ├── agent.py         # Root ADK agent
+│   ├── app/
+│   │   ├── agents/      # AI agent implementations
+│   │   ├── models/      # Data models and schemas
+│   │   ├── routers/     # API endpoints
+│   │   └── tools/       # Custom ADK tools
+│   └── data/            # Phishing dataset
+├── frontend/            # Next.js 14 frontend (TBD)
+└── README.md           # This file
+```
+
+## Quick Start
+
+### Backend Setup
+
+1. Navigate to backend directory:
+```bash
+cd backend
+```
+
+2. Create virtual environment and install dependencies:
+```bash
+python -m venv venv
+venv\Scripts\activate  # Windows
+source venv/bin/activate  # Mac/Linux
+pip install -r requirements.txt
+```
+
+3. Configure environment:
+```bash
+cp .env.example .env
+# Edit .env with your credentials
+```
+
+4. Start the server:
+```bash
+uvicorn app.main:app --reload
+```
+
+API available at http://localhost:8000
+
+See [backend/README.md](backend/README.md) for detailed setup instructions.
+
+### Frontend Setup
+
+Coming soon - Next.js 14 application
+
+## API Endpoints
+
+**Public:**
+- `GET /` - API information
+- `GET /health` - Health check
+- `POST /api/analyze-public` - Public analysis endpoint
+
+**Protected (Firebase Auth):**
+- `POST /api/analyze` - Full analysis with profile tracking
+- `GET /api/profile/{user_id}` - User profile and statistics
+- `POST /api/verify-token` - Token verification
+
+Full API documentation: http://localhost:8000/docs
+
+## Development
 
 ### Prerequisites
 
@@ -75,148 +146,81 @@ ThreatIQ is a capstone project demonstrating multi-agent AI systems in action. I
 - Firebase project
 - Google AI Studio API key
 
-### Backend Setup
+### Environment Setup
 
+**Backend:**
+- `GEMINI_API_KEY` - Google AI Studio
+- `MONGODB_URI` - MongoDB Atlas connection string
+- `FIREBASE_PROJECT_ID`, `FIREBASE_PRIVATE_KEY`, `FIREBASE_CLIENT_EMAIL` - Firebase credentials
+
+**Frontend:**
+- `NEXT_PUBLIC_FIREBASE_API_KEY` - Firebase web config
+- `NEXT_PUBLIC_API_URL` - Backend API URL
+
+### Testing
+
+Backend automated tests:
 ```bash
 cd backend
-
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # or venv\Scripts\activate on Windows
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Configure environment
-cp .env.example .env
-# Edit .env with your credentials
-
-# Validate configuration
-python validate_env.py
-
-# Start server
-uvicorn app.main:app --reload
-```
-
-### Frontend Setup
-
-```bash
-cd frontend
-
-# Install dependencies
-npm install
-
-# Configure environment
-cp .env.local.example .env.local
-# Edit .env.local with your credentials
-
-# Start dev server
-npm run dev
-```
-
-Visit http://localhost:3000 🎉
-
-## 📖 Documentation
-
-- [Backend README](backend/README.md) - API documentation and backend setup
-- [Testing Guide](backend/TESTING_GUIDE.md) - Comprehensive testing instructions
-- [Setup Guide](backend/SETUP_GUIDE.md) - Detailed environment configuration
-
-## 🧪 Testing
-
-### Backend Tests
-
-```bash
-cd backend
-
-# Validate environment
-python validate_env.py
-
-# Run automated tests
 python test_backend.py
-
-# Manual API test
-curl -X POST "http://localhost:8000/api/analyze-public" \
-  -H "Content-Type: application/json" \
-  -d '{"message": "URGENT: Click here to verify your account!", "user_id": "test"}'
 ```
 
-## 📊 API Endpoints
+## Deployment
 
-| Endpoint | Method | Auth | Description |
-|----------|--------|------|-------------|
-| `/health` | GET | No | Health check |
-| `/api/analyze-public` | POST | No | Public analysis (testing) |
-| `/api/analyze` | POST | Yes | Full analysis with profile |
-| `/api/profile/{user_id}` | GET | Yes | Get user profile |
-| `/api/verify-token` | POST | Yes | Verify Firebase token |
+**Backend:**
+- Platform: Render.com or Railway
+- Requirements: Python 3.9+, environment variables
+- Cold start: ~2-5 seconds on free tier
 
-API Documentation: http://localhost:8000/docs
+**Frontend:**
+- Platform: Vercel or Netlify
+- Build: Next.js automatic optimization
+- CDN: Global edge network
 
-## 🧠 Multi-Agent System
+**Database:**
+- MongoDB Atlas free tier (512MB)
 
-### 1. Classifier Agent
-Analyzes messages using Gemini AI to detect phishing indicators and assigns confidence scores.
+**Authentication:**
+- Firebase free tier
 
-### 2. Evidence Agent
-Searches phishing dataset using TF-IDF similarity to find relevant examples.
+## Performance
 
-### 3. Memory Agent
-Manages user profiles in MongoDB, tracking progress and identifying weak spots.
+- Classification: ~1 second
+- Full multi-agent workflow: ~3-5 seconds
+- First request (cold start): 2-5 seconds
+- Rate limit: 15 requests/minute (Gemini free tier)
 
-### 4. Coach Agent
-Generates personalized educational responses, tips, and quizzes based on user context.
+## Security
 
-### 5. Orchestrator Agent
-Coordinates the entire workflow, ensuring proper sequencing and data flow.
-
-## 🎓 Learning from ThreatIQ
-
-Users learn by:
-1. **Analyzing** - Paste suspicious messages
-2. **Guessing** - Make a prediction (phishing/safe/unclear)
-3. **Learning** - See detailed analysis and red flags
-4. **Comparing** - View similar real phishing examples
-5. **Practicing** - Take AI-generated quizzes
-6. **Tracking** - Monitor progress and weak spots
-
-## 🔒 Security
-
-- All API keys stored in environment  variables (never in code)
+- API keys stored in environment variables
 - Firebase Authentication for user management
-- MongoDB with authentication and IP whitelisting
-- CORS properly configured for production
-- Rate limiting on API endpoints
+- MongoDB with IP whitelisting
+- CORS properly configured
+- No sensitive data in version control
 
-## 📈 Future Enhancements
+## Future Enhancements
 
-- [ ] Add more phishing datasets
-- [ ] Implement A/B testing for coaching strategies
-- [ ] Add team/organization features
-- [ ] Export learning analytics
-- [ ] Mobile app version
-- [ ] Browser extension for real-time analysis
+- Additional phishing datasets
+- A/B testing for coaching strategies
+- Team/organization features
+- Browser extension for real-time analysis
+- Mobile application
 
-## 🤝 Contributing
+## License
 
-This is a capstone project, but suggestions are welcome! Please open an issue to discuss proposed changes.
+MIT License
 
-## 📝 License
+## Author
 
-MIT License - see [LICENSE](LICENSE) file for details
+Built as a capstone project demonstrating multi-agent AI systems and full-stack development.
 
-## 👨‍💻 Author
+## Acknowledgments
 
-Built as a capstone project demonstrating multi-agent AI systems, agentic workflows, and full-stack development.
-
-## 🙏 Acknowledgments
-
-- Google Gemini AI for powerful language models
+- Google Gemini AI for language models
 - MongoDB Atlas for database services
 - Firebase for authentication
-- Kaggle for phishing datasets
 - The open-source community
 
----
+## Contact
 
-**Note:** This project uses free tiers of all services. For production deployment, consider upgrading to paid plans for better performance and reliability.
+For questions or issues, please open a GitHub issue.
