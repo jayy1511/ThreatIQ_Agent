@@ -1,15 +1,31 @@
-﻿'use client';
+﻿﻿'use client';
 
-import { useEffect, useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useEffect, useState } from 'react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/context/AuthContext';
 import { getUserSummary, getUserProfile } from '@/lib/api';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+} from 'recharts';
 import { Shield, Target, TrendingUp, AlertTriangle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-
-import ProtectedRoute from "@/components/ProtectedRoute"
+import ProtectedRoute from '@/components/ProtectedRoute';
 
 export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth();
@@ -19,13 +35,12 @@ export default function DashboardPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Auth check handled by ProtectedRoute
     if (user) {
       const fetchData = async () => {
         try {
           const [summaryData, profileData] = await Promise.all([
             getUserSummary(user.uid),
-            getUserProfile(user.uid)
+            getUserProfile(user.uid),
           ]);
           setSummary(summaryData);
           setProfile(profileData);
@@ -40,25 +55,45 @@ export default function DashboardPage() {
   }, [user]);
 
   if (loading || authLoading) {
-    return <div className="flex items-center justify-center min-h-screen">Loading dashboard...</div>;
+    return (
+      <ProtectedRoute>
+        <div className="flex items-center justify-center min-h-screen">
+          Loading dashboard...
+        </div>
+      </ProtectedRoute>
+    );
   }
 
-  // Prepare chart data
-  const categoryData = profile?.by_category ? Object.entries(profile.by_category).map(([name, stats]: [string, any]) => ({
-    name: name.replace('_', ' '),
-    seen: stats.seen,
-    mistakes: stats.mistakes
-  })) : [];
+  // ✅ Prepare chart data from profile
+  const categoryData =
+    profile?.by_category
+      ? Object.entries(profile.by_category).map(
+          ([name, stats]: [string, any]) => ({
+            name: name.replace('_', ' '),
+            seen: stats.seen,
+            mistakes: stats.mistakes,
+          }),
+        )
+      : [];
 
-  const performanceData = [
-    { name: 'Correct', value: profile?.correct_guesses || 0, color: '#22c55e' },
-    { name: 'Incorrect', value: (profile?.total_messages || 0) - (profile?.correct_guesses || 0), color: '#ef4444' }
-  ];
+  const totalMessages = profile?.total_messages || 0;
+  const correctGuesses = profile?.correct_guesses || 0;
+  const incorrectGuesses = Math.max(totalMessages - correctGuesses, 0);
+
+  const performanceData =
+    totalMessages > 0
+      ? [
+          { name: 'Correct', value: correctGuesses, color: '#22c55e' },
+          { name: 'Incorrect', value: incorrectGuesses, color: '#ef4444' },
+        ]
+      : [];
 
   return (
     <ProtectedRoute>
       <div className="container mx-auto py-10 px-4">
-        <h1 className="text-3xl font-bold tracking-tight mb-8">Security Dashboard</h1>
+        <h1 className="text-3xl font-bold tracking-tight mb-8">
+          Security Dashboard
+        </h1>
 
         {/* Stats Overview */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
@@ -94,27 +129,45 @@ export default function DashboardPage() {
             <TabsTrigger value="analytics">Detailed Analytics</TabsTrigger>
           </TabsList>
 
+          {/* ===== OVERVIEW TAB ===== */}
           <TabsContent value="overview" className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
               {/* Performance Chart */}
               <Card className="col-span-4">
                 <CardHeader>
                   <CardTitle>Performance by Category</CardTitle>
-                  <CardDescription>Your detection accuracy across different threat types.</CardDescription>
+                  <CardDescription>
+                    Your detection accuracy across different threat types.
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="pl-2">
-                  <div className="h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={categoryData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" />
-                        <YAxis />
-                        <Tooltip />
-                        <Bar dataKey="seen" fill="#3b82f6" name="Total Seen" />
-                        <Bar dataKey="mistakes" fill="#ef4444" name="Mistakes" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
+                  {categoryData.length > 0 ? (
+                    <div className="h-[300px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={categoryData}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="name" />
+                          <YAxis />
+                          <Tooltip />
+                          <Bar
+                            dataKey="seen"
+                            fill="#3b82f6"
+                            name="Total Seen"
+                          />
+                          <Bar
+                            dataKey="mistakes"
+                            fill="#ef4444"
+                            name="Mistakes"
+                          />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  ) : (
+                    <div className="h-[300px] flex items-center justify-center border-2 border-dashed rounded-md text-sm text-muted-foreground">
+                      No category performance data yet. Analyze a few messages
+                      to see stats here.
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
@@ -122,44 +175,62 @@ export default function DashboardPage() {
               <Card className="col-span-3">
                 <CardHeader>
                   <CardTitle>Overall Accuracy</CardTitle>
-                  <CardDescription>Ratio of correct identifications.</CardDescription>
+                  <CardDescription>
+                    Ratio of correct identifications.
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={performanceData}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={60}
-                          outerRadius={80}
-                          paddingAngle={5}
-                          dataKey="value"
-                        >
-                          {performanceData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Pie>
-                        <Tooltip />
-                      </PieChart>
-                    </ResponsiveContainer>
-                    <div className="flex justify-center gap-4 mt-4">
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full bg-green-500" />
-                        <span className="text-sm text-muted-foreground">Correct</span>
+                  {performanceData.length > 0 ? (
+                    <>
+                      <div className="h-[300px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={performanceData}
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={60}
+                              outerRadius={80}
+                              paddingAngle={5}
+                              dataKey="value"
+                            >
+                              {performanceData.map((entry, index) => (
+                                <Cell
+                                  key={`cell-${index}`}
+                                  fill={entry.color}
+                                />
+                              ))}
+                            </Pie>
+                            <Tooltip />
+                          </PieChart>
+                        </ResponsiveContainer>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full bg-red-500" />
-                        <span className="text-sm text-muted-foreground">Incorrect</span>
+                      <div className="flex justify-center gap-4 mt-4">
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 rounded-full bg-green-500" />
+                          <span className="text-sm text-muted-foreground">
+                            Correct
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 rounded-full bg-red-500" />
+                          <span className="text-sm text-muted-foreground">
+                            Incorrect
+                          </span>
+                        </div>
                       </div>
+                    </>
+                  ) : (
+                    <div className="h-[300px] flex items-center justify-center border-2 border-dashed rounded-md text-sm text-muted-foreground">
+                      Not enough data to calculate accuracy yet.
                     </div>
-                  </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
           </TabsContent>
 
+          {/* ===== ANALYTICS TAB ===== */}
           <TabsContent value="analytics">
             <Card>
               <CardHeader>
@@ -172,12 +243,18 @@ export default function DashboardPage() {
                 {summary?.weak_spots?.length > 0 ? (
                   <div className="space-y-4">
                     {summary.weak_spots.map((spot: string, i: number) => (
-                      <div key={i} className="flex items-center p-4 border rounded-lg bg-red-50 dark:bg-red-900/10">
+                      <div
+                        key={i}
+                        className="flex items-center p-4 border rounded-lg bg-red-50 dark:bg-red-900/10"
+                      >
                         <AlertTriangle className="h-5 w-5 text-red-500 mr-4" />
                         <div>
-                          <h4 className="font-semibold capitalize">{spot.replace('_', ' ')}</h4>
+                          <h4 className="font-semibold capitalize">
+                            {spot.replace('_', ' ')}
+                          </h4>
                           <p className="text-sm text-muted-foreground">
-                            High mistake rate detected in this category. Recommended: Review examples in the Analyze tool.
+                            High mistake rate detected in this category.
+                            Recommended: Review examples in the Analyze tool.
                           </p>
                         </div>
                       </div>
@@ -186,8 +263,13 @@ export default function DashboardPage() {
                 ) : (
                   <div className="flex flex-col items-center justify-center py-8 text-center">
                     <Shield className="h-12 w-12 text-green-500 mb-4" />
-                    <h3 className="text-lg font-semibold">No Weak Spots Detected!</h3>
-                    <p className="text-muted-foreground">Great job! You're identifying threats accurately across all categories.</p>
+                    <h3 className="text-lg font-semibold">
+                      No Weak Spots Detected!
+                    </h3>
+                    <p className="text-muted-foreground">
+                      Great job – you&apos;re identifying threats accurately
+                      across all categories.
+                    </p>
                   </div>
                 )}
               </CardContent>
@@ -199,7 +281,17 @@ export default function DashboardPage() {
   );
 }
 
-function StatCard({ title, value, icon, description }: { title: string, value: string | number, icon: React.ReactNode, description: string }) {
+function StatCard({
+  title,
+  value,
+  icon,
+  description,
+}: {
+  title: string;
+  value: string | number;
+  icon: React.ReactNode;
+  description: string;
+}) {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

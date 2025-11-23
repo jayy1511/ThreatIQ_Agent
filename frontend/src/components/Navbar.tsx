@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { useAuth } from "@/context/AuthContext"
 import { Button } from "@/components/ui/button"
-import { Shield, LogOut, User as UserIcon, LayoutDashboard } from "lucide-react"
+import { Shield, LogOut, User as UserIcon, LayoutDashboard, History as HistoryIcon } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,6 +32,9 @@ export default function Navbar() {
               </Link>
               <Link href="/dashboard" className="text-sm font-medium transition-colors hover:text-primary">
                 Dashboard
+              </Link>
+              <Link href="/history" className="text-sm font-medium transition-colors hover:text-primary">
+                History
               </Link>
             </div>
           )}
@@ -63,6 +66,12 @@ export default function Navbar() {
                   <Link href="/dashboard" className="cursor-pointer">
                     <LayoutDashboard className="mr-2 h-4 w-4" />
                     <span>Dashboard</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/history" className="cursor-pointer">
+                    <HistoryIcon className="mr-2 h-4 w-4" />
+                    <span>History</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
