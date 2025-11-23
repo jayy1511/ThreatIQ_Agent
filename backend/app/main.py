@@ -11,7 +11,7 @@ from app.routers import eval as eval_router
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 
 logger = logging.getLogger(__name__)
@@ -20,30 +20,37 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title="ThreatIQ API",
     description="Multi-Agent Phishing Trainer & Security Coach",
-    version="1.0.0"
+    version="1.0.0",
 )
 
-# Configure CORS
+# ----------------- CORS CONFIG -----------------
+# Add your frontend URLs here
+origins = [
+    "http://localhost:3000",
+    "https://threat-iq-agent-b00ye3lnj-jay-patels-projects-9518309c.vercel.app/
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins_list,
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+# -----------------------------------------------
 
 
 @app.on_event("startup")
 async def startup_event():
     """Initialize services on startup."""
     logger.info("Starting ThreatIQ API...")
-    
+
     # Connect to MongoDB
     await Database.connect_db()
-    
+
     # Load phishing dataset
     phishing_dataset.load_dataset()
-    
+
     logger.info("ThreatIQ API started successfully!")
 
 
@@ -61,7 +68,7 @@ async def root():
     return {
         "message": "Welcome to ThreatIQ API",
         "version": "1.0.0",
-        "status": "operational"
+        "status": "operational",
     }
 
 
@@ -71,12 +78,12 @@ async def health_check():
     try:
         # Check database connection
         db = Database.get_db()
-        await db.command('ping')
-        
+        await db.command("ping")
+
         return {
             "status": "healthy",
             "database": "connected",
-            "dataset": "loaded" if phishing_dataset._loaded else "not loaded"
+            "dataset": "loaded" if phishing_dataset._loaded else "not loaded",
         }
     except Exception as e:
         logger.error(f"Health check failed: {e}")
@@ -95,9 +102,10 @@ app.include_router(eval_router.router, prefix="/api")
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(
         "app.main:app",
         host=settings.api_host,
         port=settings.api_port,
-        reload=True
+        reload=True,
     )
