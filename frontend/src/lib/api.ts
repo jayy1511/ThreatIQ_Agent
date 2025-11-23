@@ -10,19 +10,14 @@ const api = axios.create({
   },
 });
 
-// Attach Firebase token
+// Add a request interceptor to include the Firebase token
 api.interceptors.request.use(async (config) => {
   try {
     const user = auth.currentUser;
     if (user) {
       const token = await user.getIdToken();
-
-      // Ensure headers object exists, then mutate it
-      if (!config.headers) {
-        config.headers = {};
-      }
-
-      (config.headers as any).Authorization = `Bearer ${token}`;
+      // Use the set method to properly set headers in Axios
+      config.headers.set("Authorization", `Bearer ${token}`);
     }
   } catch (error) {
     console.error("Error attaching token:", error);
