@@ -24,7 +24,6 @@ app = FastAPI(
 )
 
 # ----------------- CORS CONFIG -----------------
-# Add your frontend URLs here
 origins = [
     "http://localhost:3000",
     "https://threat-iq-agent-b00ye3lnj-jay-patels-projects-9518309c.vercel.app/"
