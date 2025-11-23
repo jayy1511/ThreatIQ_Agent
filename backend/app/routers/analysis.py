@@ -27,11 +27,9 @@ async def analyze_message(
     try:
         logger.info(f"Analysis request from user: {request.user_id}")
         
-        # Verify user_id matches token
         if request.user_id != user_data.get('uid'):
             raise HTTPException(status_code=403, detail="User ID mismatch")
         
-        # Run multi-agent analysis using ADK root agent
         result = await root_agent.analyze_message(
             message=request.message,
             user_id=request.user_id,
@@ -56,7 +54,6 @@ async def analyze_message_public(request: AnalysisRequest):
     try:
         logger.info("Public analysis request (no auth)")
         
-        # For public endpoint, use ADK root agent with guest user
         result = await root_agent.analyze_message(
             message=request.message,
             user_id=request.user_id or "guest",

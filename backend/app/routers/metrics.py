@@ -22,11 +22,9 @@ async def get_metrics(user_data: dict = Depends(verify_firebase_token)):
     try:
         db = Database.get_db()
 
-        # Count user profiles and interactions
         total_users = await db.user_profiles.count_documents({})
         total_interactions = await db.interactions.count_documents({})
 
-        # Aggregate total_messages and correct_guesses across all profiles
         pipeline = [
             {
                 "$group": {

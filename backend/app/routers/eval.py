@@ -11,7 +11,6 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-# Configure Gemini once
 genai.configure(api_key=settings.gemini_api_key)
 
 EVAL_SYSTEM_INSTRUCTION = """
@@ -56,7 +55,6 @@ async def evaluate_sample(
     try:
         db = Database.get_db()
 
-        # 1) Fetch recent interactions
         cursor = (
             db.interactions.find(
                 {},
@@ -87,7 +85,6 @@ async def evaluate_sample(
         if not interactions:
             return {"evaluated": 0, "message": "No interactions to evaluate."}
 
-        # 2) Build prompt for Gemini
         prompt = (
             EVAL_SYSTEM_INSTRUCTION
             + "\n\nHere is the list of interactions to evaluate:\n\n"
@@ -106,11 +103,9 @@ async def evaluate_sample(
         raw_text = (response.text or "").strip()
         logger.info("Evaluation raw response: %s", raw_text[:300])
 
-        # Attempt to parse JSON array
         try:
             eval_data = json.loads(raw_text)
         except json.JSONDecodeError:
-            # fallback: try to extract JSON between first [ and last ]
             if "[" in raw_text and "]" in raw_text:
                 start = raw_text.find("[")
                 end = raw_text.rfind("]") + 1
@@ -121,7 +116,6 @@ async def evaluate_sample(
         if not isinstance(eval_data, list):
             raise ValueError("Evaluation response is not a list")
 
-        # 3) Store evaluations
         now = datetime.utcnow()
         inserted = 0
 

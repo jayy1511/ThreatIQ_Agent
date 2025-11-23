@@ -36,7 +36,6 @@ class CoachAgent:
             Dictionary with verdict, explanation, tips, and optional quiz
         """
         try:
-            # Build context-aware prompt
             prompt = self._build_coaching_prompt(
                 message, classification, similar_examples, learning_context
             )
@@ -50,10 +49,7 @@ class CoachAgent:
                 )
             )
             
-            # Parse response
             response_text = response.text.strip()
-            
-            # Remove markdown code blocks if present
             if response_text.startswith('```'):
                 response_text = response_text.split('```')[1]
                 if response_text.startswith('json'):
@@ -62,10 +58,8 @@ class CoachAgent:
             
             result = json.loads(response_text)
             
-            # Add similar examples
             result['similar_examples'] = similar_examples
             
-            # Validate and fix if needed
             if 'verdict' not in result:
                 result['verdict'] = classification['label']
             if 'explanation' not in result:
@@ -80,7 +74,6 @@ class CoachAgent:
             logger.error(f"Error generating coaching: {e}")
             logger.error(f"Response text: {response_text if 'response_text' in locals() else 'N/A'}")
             
-            # Return fallback response
             return self._get_fallback_response(classification, similar_examples)
     
     def _build_coaching_prompt(
@@ -92,7 +85,6 @@ class CoachAgent:
     ) -> str:
         """Build the coaching prompt based on context."""
         
-        # Personalization based on user context
         user_level = "beginner" if learning_context.get('is_new_user', True) else "intermediate"
         weak_spots = learning_context.get('weak_spots', [])
         
@@ -178,6 +170,4 @@ Generate the JSON response now:"""
             "quiz": None
         }
 
-
-# Global instance
 coach_agent = CoachAgent()

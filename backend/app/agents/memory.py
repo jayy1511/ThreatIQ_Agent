@@ -59,7 +59,6 @@ class MemoryAgent:
         try:
             profile = await self.load_profile(user_id)
             
-            # Build context summary
             context = {
                 "is_new_user": profile.total_messages < 5,
                 "weak_spots": profile.weak_spots[:3] if profile.weak_spots else [],
@@ -69,12 +68,11 @@ class MemoryAgent:
             if profile.total_messages > 0:
                 context["accuracy"] = (profile.correct_guesses / profile.total_messages) * 100
             
-            # Add struggle categories
             struggling_with = []
             for category, stats in profile.by_category.items():
                 if stats["seen"] >= 2:
                     mistake_rate = stats["mistakes"] / stats["seen"]
-                    if mistake_rate > 0.4:  # 40% mistake rate
+                    if mistake_rate > 0.4:
                         struggling_with.append({
                             "category": category,
                             "mistake_rate": round(mistake_rate * 100, 1)
@@ -94,5 +92,4 @@ class MemoryAgent:
             }
 
 
-# Global instance
 memory_agent = MemoryAgent()

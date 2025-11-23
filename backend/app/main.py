@@ -3,13 +3,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.models.database import Database
 from app.tools.dataset_tools import phishing_dataset
-from agent import root_agent  # Import ADK root agent
+from agent import root_agent  
 import logging
 from app.routers import metrics
 from app.routers import eval as eval_router
 from app.routers import analysis, profile, auth
 
-# Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -17,24 +16,19 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-# Create FastAPI app
 app = FastAPI(
     title="ThreatIQ API",
     description="Multi-Agent Phishing Trainer & Security Coach",
     version="1.0.0",
 )
 
-# ---------- CORS CONFIG (OPEN FOR DEMO) ----------
-# This allows your Vercel frontend (and localhost) to call the API.
-# For now we allow all origins to avoid mismatch problems.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],          # 👈 open CORS so Vercel is allowed
+    allow_origins=["*"],         
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-# -------------------------------------------------
 
 
 @app.on_event("startup")

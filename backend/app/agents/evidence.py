@@ -11,7 +11,6 @@ class EvidenceAgent:
     """
     
     def __init__(self):
-        # Ensure dataset is loaded
         phishing_dataset.load_dataset()
     
     async def find_evidence(
@@ -34,14 +33,12 @@ class EvidenceAgent:
             List of similar examples with message, category, and description
         """
         try:
-            # Try to find similar examples using TF-IDF similarity
             examples = phishing_dataset.find_similar_examples(
                 message=message,
                 reason_tags=reason_tags,
                 max_examples=max_examples
             )
             
-            # If we don't have enough examples, try category-based search
             if len(examples) < max_examples and category != 'general_phishing':
                 category_examples = phishing_dataset.get_category_examples(
                     category=category,
@@ -57,5 +54,4 @@ class EvidenceAgent:
             return []
 
 
-# Global instance
 evidence_agent = EvidenceAgent()

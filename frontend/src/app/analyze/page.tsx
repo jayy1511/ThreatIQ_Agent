@@ -47,13 +47,11 @@ export default function AnalyzePage() {
     try {
       let data;
 
-      // 1️⃣ Try authenticated endpoint (saves to dashboard)
       try {
         data = await analyzeMessage(message, 'unclear', user.uid);
       } catch (err: any) {
         console.error('Protected analysis failed, trying public endpoint:', err);
 
-        // 2️⃣ Fallback to public endpoint so you still see a result
         data = await analyzePublicMessage(message, 'unclear', user.uid);
       }
 
@@ -130,13 +128,12 @@ export default function AnalyzePage() {
                 <div className="space-y-6">
                   {/* Verdict Card */}
                   <Card
-                    className={`border-l-4 ${
-                      result.classification.label === 'phishing'
+                    className={`border-l-4 ${result.classification.label === 'phishing'
                         ? 'border-l-red-500'
                         : result.classification.label === 'safe'
-                        ? 'border-l-green-500'
-                        : 'border-l-yellow-500'
-                    }`}
+                          ? 'border-l-green-500'
+                          : 'border-l-yellow-500'
+                      }`}
                   >
                     <CardHeader>
                       <div className="flex items-center justify-between">

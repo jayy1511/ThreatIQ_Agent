@@ -1,4 +1,4 @@
-﻿﻿'use client';
+﻿'use client';
 
 import React, { useEffect, useState } from 'react';
 import {
@@ -64,16 +64,15 @@ export default function DashboardPage() {
     );
   }
 
-  // ✅ Prepare chart data from profile
   const categoryData =
     profile?.by_category
       ? Object.entries(profile.by_category).map(
-          ([name, stats]: [string, any]) => ({
-            name: name.replace('_', ' '),
-            seen: stats.seen,
-            mistakes: stats.mistakes,
-          }),
-        )
+        ([name, stats]: [string, any]) => ({
+          name: name.replace('_', ' '),
+          seen: stats.seen,
+          mistakes: stats.mistakes,
+        }),
+      )
       : [];
 
   const totalMessages = profile?.total_messages || 0;
@@ -83,9 +82,9 @@ export default function DashboardPage() {
   const performanceData =
     totalMessages > 0
       ? [
-          { name: 'Correct', value: correctGuesses, color: '#22c55e' },
-          { name: 'Incorrect', value: incorrectGuesses, color: '#ef4444' },
-        ]
+        { name: 'Correct', value: correctGuesses, color: '#22c55e' },
+        { name: 'Incorrect', value: incorrectGuesses, color: '#ef4444' },
+      ]
       : [];
 
   return (

@@ -8,7 +8,6 @@ from app.config import settings
 
 logger = logging.getLogger(__name__)
 
-# Configure Gemini API once
 genai.configure(api_key=settings.gemini_api_key)
 
 
@@ -18,7 +17,6 @@ class ClassifierAgent:
     """
 
     def __init__(self) -> None:
-        # System instruction that defines the JSON schema and behaviour
         self.system_instruction = """
 You are a phishing detection expert. Your task is to analyse messages and decide
 whether they are "phishing", "safe", or "unclear".
@@ -47,7 +45,6 @@ Possible reason_tags:
 Be precise and conservative. If there is no concrete sign of phishing, use "safe".
 """
 
-        # Attach the system instruction to the model so it always sees the schema
         self.model = genai.GenerativeModel(
             "gemini-2.0-flash",
             system_instruction=self.system_instruction,
@@ -79,14 +76,12 @@ MESSAGE:
                 ),
             )
 
-            # Get response text and log a snippet for debugging
             response_text = response.text.strip()
             logger.info("Raw Gemini response: %s...", response_text[:200])
 
-            # Try to extract JSON robustly
+
             json_text = response_text
 
-            # Strategy 1: strip markdown code fences
             if "```" in json_text:
                 parts = json_text.split("```")
                 for part in parts:
@@ -98,7 +93,6 @@ MESSAGE:
                         json_text = candidate
                         break
 
-            # Strategy 2: take inner-most JSON object
             if "{" in json_text and "}" in json_text:
                 start = json_text.find("{")
                 end = json_text.rfind("}") + 1
@@ -106,10 +100,8 @@ MESSAGE:
 
             result = json.loads(json_text)
 
-            # --- Fallback / healing logic ---------------------------------
             text_lower = json_text.lower()
 
-            # If label missing, infer from text heuristically
             if "label" not in result or not result.get("label"):
                 if "not phishing" in text_lower or "appears safe" in text_lower or "looks safe" in text_lower:
                     result["label"] = "safe"
@@ -119,24 +111,19 @@ MESSAGE:
                     result["label"] = "phishing"
                 else:
                     result["label"] = "unclear"
-
-            # Normalise label
+l
             if result["label"] not in ["phishing", "safe", "unclear"]:
                 result["label"] = "unclear"
 
-            # If confidence missing, provide a sane default
             if "confidence" not in result or result["confidence"] is None:
                 result["confidence"] = 0.7 if result["label"] != "unclear" else 0.5
 
-            # Ensure reason_tags exists
             if "reason_tags" not in result or not isinstance(result["reason_tags"], list):
                 result["reason_tags"] = ["analysis_completed"]
 
-            # Ensure explanation exists
             if "explanation" not in result or not result["explanation"]:
                 result["explanation"] = "Analysis completed."
 
-            # Clamp confidence
             try:
                 result["confidence"] = max(0.0, min(1.0, float(result["confidence"])))
             except Exception:
@@ -186,5 +173,4 @@ MESSAGE:
             return "general_phishing"
 
 
-# Global instance used by the root agent
 classifier_agent = ClassifierAgent()

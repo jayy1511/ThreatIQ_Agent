@@ -24,7 +24,6 @@ async def get_user_profile(
       }
     """
     try:
-        # User can only access their own profile
         if user_id != user_data.get("uid"):
             raise HTTPException(
                 status_code=403,

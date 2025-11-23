@@ -1,9 +1,11 @@
 ﻿"use client"
 
+import { useState } from "react"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { useAuth } from "@/context/AuthContext"
 import { Button } from "@/components/ui/button"
-import { Shield, LogOut, User as UserIcon, LayoutDashboard, History as HistoryIcon } from "lucide-react"
+import { LogOut, User as UserIcon, LayoutDashboard, History as HistoryIcon, Menu, X } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,27 +17,66 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ModeToggle } from "@/components/mode-toggle"
 
-export default function Navbar() {
-  const { user, logout } = useAuth()
+const navLinks = [
+  { href: "/analyze", label: "Analyze" },
+  { href: "/dashboard", label: "Dashboard" },
+  { href: "/history", label: "History" },
+]
+
+function NavLink({
+  href,
+  label,
+  onClick,
+}: {
+  href: string
+  label: string
+  onClick?: () => void
+}) {
+  const pathname = usePathname()
+  const isActive = pathname === href
 
   return (
-    <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
+    <Link
+      href={href}
+      onClick={onClick}
+      className={`text-sm font-medium transition-colors ${
+        isActive ? "text-primary" : "text-muted-foreground hover:text-primary"
+      }`}
+    >
+      {label}
+    </Link>
+  )
+}
+
+export default function Navbar() {
+  const { user, logout } = useAuth()
+  const [mobileOpen, setMobileOpen] = useState(false)
+
+  const closeMobile = () => setMobileOpen(false)
+
+  return (
+    <nav className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            className="mr-2 flex items-center justify-center rounded-md border border-border p-2 text-muted-foreground hover:bg-muted md:hidden"
+            onClick={() => setMobileOpen((prev) => !prev)}
+            aria-label="Toggle navigation"
+          >
+            {mobileOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+          </button>
+
           <Link href="/" className="flex items-center gap-2 font-bold text-xl">
-            <span className="hidden sm:inline-block ml-6">ThreatIQ</span>
+            <span className="ml-1 sm:ml-6 hidden sm:inline-block">ThreatIQ</span>
+            <span className="inline-block sm:hidden">ThreatIQ</span>
           </Link>
+
           {user && (
-            <div className="hidden md:flex ml-8 gap-6">
-              <Link href="/analyze" className="text-sm font-medium transition-colors hover:text-primary">
-                Analyze
-              </Link>
-              <Link href="/dashboard" className="text-sm font-medium transition-colors hover:text-primary">
-                Dashboard
-              </Link>
-              <Link href="/history" className="text-sm font-medium transition-colors hover:text-primary">
-                History
-              </Link>
+            <div className="ml-8 hidden gap-6 md:flex">
+              {navLinks.map((link) => (
+                <NavLink key={link.href} href={link.href} label={link.label} />
+              ))}
             </div>
           )}
         </div>
@@ -56,9 +97,7 @@ export default function Navbar() {
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none">{user.displayName}</p>
-                    <p className="text-xs leading-none text-muted-foreground">
-                      {user.email}
-                    </p>
+                    <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
@@ -88,7 +127,7 @@ export default function Navbar() {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <div className="flex gap-2">
+            <div className="hidden gap-2 sm:flex">
               <Link href="/login">
                 <Button variant="ghost">Sign In</Button>
               </Link>
@@ -99,6 +138,34 @@ export default function Navbar() {
           )}
         </div>
       </div>
+
+      {mobileOpen && (
+        <div className="border-t border-border bg-background/95 px-4 pb-3 pt-2 md:hidden">
+          {user ? (
+            <div className="flex flex-col gap-3">
+              {navLinks.map((link) => (
+                <NavLink
+                  key={link.href}
+                  href={link.href}
+                  label={link.label}
+                  onClick={closeMobile}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="mt-2 flex flex-col gap-2">
+              <Link href="/login" onClick={closeMobile}>
+                <Button variant="ghost" className="w-full">
+                  Sign In
+                </Button>
+              </Link>
+              <Link href="/signup" onClick={closeMobile}>
+                <Button className="w-full">Get Started</Button>
+              </Link>
+            </div>
+          )}
+        </div>
+      )}
     </nav>
   )
 }

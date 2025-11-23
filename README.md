@@ -6,7 +6,6 @@ An intelligent phishing detection and security training platform leveraging Goog
 
 - [Problem Statement](#problem-statement)
 - [Solution](#solution)
-- [System Architecture](#system-architecture)
 - [Key Features](#key-features)
 - [Technology Stack](#technology-stack)
 - [Project Structure](#project-structure)
@@ -36,51 +35,6 @@ ThreatIQ addresses this challenge through a multi-agent AI system that combines 
 4. **Interactive Assessment**: Generates contextual quizzes and safety tips to reinforce learning and measure comprehension.
 
 5. **Progress Tracking**: Maintains comprehensive user profiles with performance metrics, category-specific statistics, and learning trajectory visualization.
-
-## System Architecture
-
-### High-Level Overview
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                        Frontend Layer                        │
-│    Next.js 14 • TypeScript • ShadCN UI • TailwindCSS        │
-│            Firebase Auth • Responsive Design                 │
-└──────────────────┬──────────────────────────────────────────┘
-                   │ REST API (HTTPS)
-┌──────────────────┴──────────────────────────────────────────┐
-│                      Backend API Layer                       │
-│             FastAPI • Pydantic • CORS Middleware             │
-│              Firebase Admin SDK • Token Validation           │
-└──────────────────┬──────────────────────────────────────────┘
-                   │
-┌──────────────────┴──────────────────────────────────────────┐
-│                  Multi-Agent Orchestration                   │
-│                    (Google ADK Framework)                    │
-│  ┌────────────────────────────────────────────────────────┐ │
-│  │          Root Orchestrator Agent (Sequential)          │ │
-│  │        Session Management • Workflow Control           │ │
-│  └──────────┬─────────────┬─────────────┬─────────────────┘ │
-│             │             │             │                    │
-│  ┌──────────▼───┐ ┌───────▼──────┐ ┌───▼──────────┐        │
-│  │ Classifier   │ │   Evidence   │ │    Memory    │        │
-│  │    Agent     │ │     Agent    │ │    Agent     │        │
-│  │ Gemini 2.0   │ │  TF-IDF/DB   │ │ MongoDB CRUD │        │
-│  └──────────────┘ └──────────────┘ └──────────────┘        │
-│                                                              │
-│  ┌────────────────────────────────────────────────────────┐ │
-│  │                    Coach Agent                         │ │
-│  │      Gemini 2.0 • Educational Content Generation      │ │
-│  └────────────────────────────────────────────────────────┘ │
-└──────────────────┬────────────────┬─────────────────────────┘
-                   │                │
-         ┌─────────▼──────┐  ┌──────▼───────┐
-         │  MongoDB Atlas │  │   Firebase   │
-         │  User Profiles │  │    Auth      │
-         │  Interactions  │  │   Users      │
-         │   Evaluations  │  └──────────────┘
-         └────────────────┘
-```
 
 ### Agent Workflow
 

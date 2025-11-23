@@ -19,11 +19,9 @@ class Database:
             cls.client = AsyncIOMotorClient(settings.mongodb_uri)
             cls.db = cls.client[settings.mongodb_db_name]
             
-            # Test connection
             await cls.client.admin.command('ping')
             logger.info(f"Connected to MongoDB: {settings.mongodb_db_name}")
             
-            # Create indexes
             await cls.create_indexes()
             
         except Exception as e:
@@ -41,13 +39,10 @@ class Database:
     async def create_indexes(cls):
         """Create database indexes for performance."""
         try:
-            # User profiles - index on user_id
             await cls.db.user_profiles.create_index("user_id", unique=True)
             
-            # Interactions - index on user_id and timestamp
             await cls.db.interactions.create_index([("user_id", 1), ("timestamp", -1)])
             
-            # Users - index on firebase_uid
             await cls.db.users.create_index("firebase_uid", unique=True)
             
             logger.info("Database indexes created successfully")
@@ -61,7 +56,6 @@ class Database:
         return cls.db
 
 
-# Convenience function
 async def get_database():
     """Dependency to get database instance."""
     return Database.get_db()

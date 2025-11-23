@@ -10,9 +10,7 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-# Initialize Firebase Admin SDK
 try:
-    # Parse the private key (handle newlines)
     private_key = settings.firebase_private_key.replace('\\n', '\n')
     
     cred_dict = {
@@ -48,14 +46,12 @@ async def verify_firebase_token(authorization: Optional[str] = Header(None)) -> 
         raise HTTPException(status_code=401, detail="Authorization header missing")
     
     try:
-        # Extract token from "Bearer <token>"
         parts = authorization.split(' ')
         if len(parts) != 2 or parts[0].lower() != 'bearer':
             raise HTTPException(status_code=401, detail="Invalid authorization header format")
         
         token = parts[1]
         
-        # Verify the token
         decoded_token = auth.verify_id_token(token)
         
         logger.info(f"Token verified for user: {decoded_token.get('uid')}")

@@ -14,19 +14,14 @@ Capstone Requirements Demonstrated:
 import os
 from dotenv import load_dotenv
 
-# Load environment variables
 load_dotenv()
 
-# Configure Gemini API
 import google.generativeai as genai
 genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
 
 import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-# Note: Full ADK implementation requires the google-adk package
-# This is a hybrid approach that uses Gemini SDK with ADK patterns
 
 class ThreatIQAgent:
     """
@@ -41,7 +36,7 @@ class ThreatIQAgent:
     
     def __init__(self):
         self.model = genai.GenerativeModel('gemini-2.0-flash')
-        self.session_memory = {}  # Simple session storage (InMemorySessionService pattern)
+        self.session_memory = {}
         
         logger.info("ThreatIQ Root Agent initialized")
     
@@ -77,14 +72,12 @@ class ThreatIQAgent:
         logger.info(f"[Session: {session_id}] Starting multi-agent analysis for user: {user_id}")
         
         try:
-            # Import agents and tools
             from app.agents.classifier import classifier_agent
             from app.agents.evidence import evidence_agent
             from app.agents.memory import memory_agent
             from app.agents.coach import coach_agent
             from app.tools.profile_tools import InteractionLogger
             
-            # Step 1: Classification
             logger.info(f"[Session: {session_id}] Step 1: Running Classifier Agent")
             classification = await classifier_agent.classify(message)
             
@@ -93,7 +86,6 @@ class ThreatIQAgent:
                 message
             )
             
-            # Step 2: Evidence gathering
             logger.info(f"[Session: {session_id}] Step 2: Running Evidence Agent")
             similar_examples = await evidence_agent.find_evidence(
                 message=message,
@@ -102,11 +94,9 @@ class ThreatIQAgent:
                 max_examples=3
             )
             
-            # Step 3: Memory/Profile management
             logger.info(f"[Session: {session_id}] Step 3: Running Memory Agent")
             learning_context = await memory_agent.get_learning_context(user_id)
             
-            # Step 4: Coaching generation
             logger.info(f"[Session: {session_id}] Step 4: Running Coach Agent")
             coach_response = await coach_agent.generate_coaching(
                 message=message,
@@ -115,12 +105,10 @@ class ThreatIQAgent:
                 learning_context=learning_context
             )
             
-            # Determine if user was correct
             was_correct = None
             if user_guess:
                 was_correct = user_guess.lower() == classification['label'].lower()
             
-            # Step 5: Update user profile
             logger.info(f"[Session: {session_id}] Step 5: Updating user profile")
             await memory_agent.update_profile(
                 user_id=user_id,
@@ -128,7 +116,6 @@ class ThreatIQAgent:
                 was_correct=was_correct
             )
             
-            # Step 6: Log interaction
             logger.info(f"[Session: {session_id}] Step 6: Logging interaction")
             await InteractionLogger.log_interaction(
                 user_id=user_id,
@@ -139,7 +126,6 @@ class ThreatIQAgent:
                 session_id=session_id
             )
             
-            # Store in session memory
             self.session_memory[session_id] = {
                 "user_id": user_id,
                 "classification": classification,
@@ -170,11 +156,9 @@ class ThreatIQAgent:
             logger.info(f"Cleared session: {session_id}")
 
 
-# Global agent instance (ADK pattern)
 root_agent = ThreatIQAgent()
 
 
-# For ADK CLI support (future enhancement)
 async def main(message: str, user_id: str = "cli_user"):
     """
     Main entry point for ADK CLI.
