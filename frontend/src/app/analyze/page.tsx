@@ -12,6 +12,8 @@ import { analyzeMessage } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 
+import ProtectedRoute from "@/components/ProtectedRoute"
+
 export default function AnalyzePage() {
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
@@ -41,217 +43,219 @@ export default function AnalyzePage() {
   };
 
   return (
-    <div className="container mx-auto py-10 px-4 max-w-5xl">
-      <div className="flex flex-col gap-8">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Threat Analysis</h1>
-          <p className="text-muted-foreground mt-2">
-            Analyze suspicious messages with our multi-agent AI system.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Input Section */}
-          <div className="lg:col-span-1 space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Message Input</CardTitle>
-                <CardDescription>Paste the content you want to analyze.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Textarea
-                  placeholder="Paste email body, SMS, or social media message..."
-                  className="min-h-[300px] resize-none font-mono text-sm"
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                />
-              </CardContent>
-              <CardFooter>
-                <Button
-                  className="w-full"
-                  onClick={handleAnalyze}
-                  disabled={loading || !message.trim()}
-                >
-                  {loading ? 'Analyzing...' : 'Analyze Message'}
-                </Button>
-              </CardFooter>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm font-medium">Analysis Tips</CardTitle>
-              </CardHeader>
-              <CardContent className="text-sm text-muted-foreground space-y-2">
-                <p> Include the full message body.</p>
-                <p> Include headers if possible.</p>
-                <p> Don't click links before analyzing.</p>
-              </CardContent>
-            </Card>
+    <ProtectedRoute>
+      <div className="container mx-auto py-10 px-4 max-w-5xl">
+        <div className="flex flex-col gap-8">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Threat Analysis</h1>
+            <p className="text-muted-foreground mt-2">
+              Analyze suspicious messages with our multi-agent AI system.
+            </p>
           </div>
 
-          {/* Results Section */}
-          <div className="lg:col-span-2">
-            {result ? (
-              <div className="space-y-6">
-                {/* Verdict Card */}
-                <Card className={`border-l-4 ${result.classification.label === 'phishing' ? 'border-l-red-500' :
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Input Section */}
+            <div className="lg:col-span-1 space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Message Input</CardTitle>
+                  <CardDescription>Paste the content you want to analyze.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Textarea
+                    placeholder="Paste email body, SMS, or social media message..."
+                    className="min-h-[300px] resize-none font-mono text-sm"
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                  />
+                </CardContent>
+                <CardFooter>
+                  <Button
+                    className="w-full"
+                    onClick={handleAnalyze}
+                    disabled={loading || !message.trim()}
+                  >
+                    {loading ? 'Analyzing...' : 'Analyze Message'}
+                  </Button>
+                </CardFooter>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm font-medium">Analysis Tips</CardTitle>
+                </CardHeader>
+                <CardContent className="text-sm text-muted-foreground space-y-2">
+                  <p> Include the full message body.</p>
+                  <p> Include headers if possible.</p>
+                  <p> Don't click links before analyzing.</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Results Section */}
+            <div className="lg:col-span-2">
+              {result ? (
+                <div className="space-y-6">
+                  {/* Verdict Card */}
+                  <Card className={`border-l-4 ${result.classification.label === 'phishing' ? 'border-l-red-500' :
                     result.classification.label === 'safe' ? 'border-l-green-500' :
                       'border-l-yellow-500'
-                  }`}>
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        {result.classification.label === 'phishing' ? (
-                          <Shield className="h-8 w-8 text-red-500" />
-                        ) : result.classification.label === 'safe' ? (
-                          <CheckCircle className="h-8 w-8 text-green-500" />
-                        ) : (
-                          <AlertTriangle className="h-8 w-8 text-yellow-500" />
-                        )}
-                        <div>
-                          <CardTitle className="text-2xl capitalize">
-                            {result.classification.label}
+                    }`}>
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          {result.classification.label === 'phishing' ? (
+                            <Shield className="h-8 w-8 text-red-500" />
+                          ) : result.classification.label === 'safe' ? (
+                            <CheckCircle className="h-8 w-8 text-green-500" />
+                          ) : (
+                            <AlertTriangle className="h-8 w-8 text-yellow-500" />
+                          )}
+                          <div>
+                            <CardTitle className="text-2xl capitalize">
+                              {result.classification.label}
+                            </CardTitle>
+                            <CardDescription>
+                              Confidence: {Math.round(result.classification.confidence * 100)}%
+                            </CardDescription>
+                          </div>
+                        </div>
+                        <Badge variant={result.classification.label === 'phishing' ? 'destructive' : 'outline'}>
+                          {result.classification.label.toUpperCase()}
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-lg leading-relaxed">
+                        {result.classification.explanation}
+                      </p>
+
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {result.classification.reason_tags.map((tag: string) => (
+                          <Badge key={tag} variant="secondary" className="capitalize">
+                            {tag.replace(/_/g, ' ')}
+                          </Badge>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Detailed Analysis Tabs */}
+                  <Tabs defaultValue="coach" className="w-full">
+                    <TabsList className="grid w-full grid-cols-3">
+                      <TabsTrigger value="coach">AI Coach</TabsTrigger>
+                      <TabsTrigger value="evidence">Evidence</TabsTrigger>
+                      <TabsTrigger value="quiz">Quiz</TabsTrigger>
+                    </TabsList>
+
+                    <TabsContent value="coach" className="space-y-4 mt-4">
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="flex items-center gap-2">
+                            <Brain className="h-5 w-5 text-primary" />
+                            Coach's Insight
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <p>{result.coach_response.explanation}</p>
+
+                          <div className="bg-muted p-4 rounded-lg">
+                            <h4 className="font-semibold mb-2 flex items-center gap-2">
+                              <BookOpen className="h-4 w-4" />
+                              Safety Tips
+                            </h4>
+                            <ul className="space-y-2">
+                              {result.coach_response.tips.map((tip: string, i: number) => (
+                                <li key={i} className="flex items-start gap-2 text-sm">
+                                  <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
+                                  <span>{tip}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </TabsContent>
+
+                    <TabsContent value="evidence" className="mt-4">
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="flex items-center gap-2">
+                            <History className="h-5 w-5 text-primary" />
+                            Similar Examples
                           </CardTitle>
                           <CardDescription>
-                            Confidence: {Math.round(result.classification.confidence * 100)}%
+                            Historical examples that match this pattern.
                           </CardDescription>
-                        </div>
-                      </div>
-                      <Badge variant={result.classification.label === 'phishing' ? 'destructive' : 'outline'}>
-                        {result.classification.label.toUpperCase()}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-lg leading-relaxed">
-                      {result.classification.explanation}
-                    </p>
-
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      {result.classification.reason_tags.map((tag: string) => (
-                        <Badge key={tag} variant="secondary" className="capitalize">
-                          {tag.replace(/_/g, ' ')}
-                        </Badge>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Detailed Analysis Tabs */}
-                <Tabs defaultValue="coach" className="w-full">
-                  <TabsList className="grid w-full grid-cols-3">
-                    <TabsTrigger value="coach">AI Coach</TabsTrigger>
-                    <TabsTrigger value="evidence">Evidence</TabsTrigger>
-                    <TabsTrigger value="quiz">Quiz</TabsTrigger>
-                  </TabsList>
-
-                  <TabsContent value="coach" className="space-y-4 mt-4">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                          <Brain className="h-5 w-5 text-primary" />
-                          Coach's Insight
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        <p>{result.coach_response.explanation}</p>
-
-                        <div className="bg-muted p-4 rounded-lg">
-                          <h4 className="font-semibold mb-2 flex items-center gap-2">
-                            <BookOpen className="h-4 w-4" />
-                            Safety Tips
-                          </h4>
-                          <ul className="space-y-2">
-                            {result.coach_response.tips.map((tip: string, i: number) => (
-                              <li key={i} className="flex items-start gap-2 text-sm">
-                                <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
-                                <span>{tip}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </TabsContent>
-
-                  <TabsContent value="evidence" className="mt-4">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                          <History className="h-5 w-5 text-primary" />
-                          Similar Examples
-                        </CardTitle>
-                        <CardDescription>
-                          Historical examples that match this pattern.
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        {result.coach_response.similar_examples.map((ex: any, i: number) => (
-                          <div key={i} className="border p-3 rounded-md">
-                            <div className="flex justify-between items-center mb-2">
-                              <Badge variant="outline">{ex.category}</Badge>
-                              <span className="text-xs text-muted-foreground">
-                                {Math.round(ex.similarity * 100)}% Match
-                              </span>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          {result.coach_response.similar_examples.map((ex: any, i: number) => (
+                            <div key={i} className="border p-3 rounded-md">
+                              <div className="flex justify-between items-center mb-2">
+                                <Badge variant="outline">{ex.category}</Badge>
+                                <span className="text-xs text-muted-foreground">
+                                  {Math.round(ex.similarity * 100)}% Match
+                                </span>
+                              </div>
+                              <p className="text-sm text-muted-foreground italic">
+                                "{ex.message}"
+                              </p>
                             </div>
-                            <p className="text-sm text-muted-foreground italic">
-                              "{ex.message}"
-                            </p>
-                          </div>
-                        ))}
-                      </CardContent>
-                    </Card>
-                  </TabsContent>
+                          ))}
+                        </CardContent>
+                      </Card>
+                    </TabsContent>
 
-                  <TabsContent value="quiz" className="mt-4">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Test Your Knowledge</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        {result.coach_response.quiz ? (
-                          <div className="space-y-4">
-                            <p className="font-medium text-lg">
-                              {result.coach_response.quiz.question}
-                            </p>
-                            <div className="space-y-2">
-                              {result.coach_response.quiz.options.map((option: string, i: number) => (
-                                <Button
-                                  key={i}
-                                  variant="outline"
-                                  className="w-full justify-start h-auto py-3 px-4 whitespace-normal text-left"
-                                  onClick={() => {
-                                    if (option === result.coach_response.quiz.correct_answer) {
-                                      alert('Correct! ');
-                                    } else {
-                                      alert('Not quite. Try again!');
-                                    }
-                                  }}
-                                >
-                                  {option}
-                                </Button>
-                              ))}
+                    <TabsContent value="quiz" className="mt-4">
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Test Your Knowledge</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          {result.coach_response.quiz ? (
+                            <div className="space-y-4">
+                              <p className="font-medium text-lg">
+                                {result.coach_response.quiz.question}
+                              </p>
+                              <div className="space-y-2">
+                                {result.coach_response.quiz.options.map((option: string, i: number) => (
+                                  <Button
+                                    key={i}
+                                    variant="outline"
+                                    className="w-full justify-start h-auto py-3 px-4 whitespace-normal text-left"
+                                    onClick={() => {
+                                      if (option === result.coach_response.quiz.correct_answer) {
+                                        alert('Correct! ');
+                                      } else {
+                                        alert('Not quite. Try again!');
+                                      }
+                                    }}
+                                  >
+                                    {option}
+                                  </Button>
+                                ))}
+                              </div>
                             </div>
-                          </div>
-                        ) : (
-                          <p className="text-muted-foreground">No quiz available for this analysis.</p>
-                        )}
-                      </CardContent>
-                    </Card>
-                  </TabsContent>
-                </Tabs>
-              </div>
-            ) : (
-              <div className="h-full flex items-center justify-center min-h-[400px] border-2 border-dashed rounded-lg text-muted-foreground">
-                <div className="text-center space-y-2">
-                  <Shield className="h-12 w-12 mx-auto opacity-20" />
-                  <p>Enter a message to see the analysis results here.</p>
+                          ) : (
+                            <p className="text-muted-foreground">No quiz available for this analysis.</p>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </TabsContent>
+                  </Tabs>
                 </div>
-              </div>
-            )}
+              ) : (
+                <div className="h-full flex items-center justify-center min-h-[400px] border-2 border-dashed rounded-lg text-muted-foreground">
+                  <div className="text-center space-y-2">
+                    <Shield className="h-12 w-12 mx-auto opacity-20" />
+                    <p>Enter a message to see the analysis results here.</p>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </ProtectedRoute>
   );
 }
