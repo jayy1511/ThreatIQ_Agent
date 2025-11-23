@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Shield, AlertTriangle, CheckCircle, Info, Brain, BookOpen, History } from 'lucide-react';
-import { analyzeMessage } from '@/lib/api';
+import { analyzeMessage, analyzePublicMessage } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 
@@ -18,6 +18,7 @@ export default function AnalyzePage() {
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
   const router = useRouter();
 
@@ -25,18 +26,31 @@ export default function AnalyzePage() {
     if (!message.trim()) return;
 
     if (!user) {
-      // Redirect to login or show prompt
       alert('Please sign in to use the full analysis tool.');
       return;
     }
 
+    setError(null);
     setLoading(true);
+
     try {
-      // For now we assume user is unsure, but we could add UI to let them guess
-      const data = await analyzeMessage(message, 'unclear', user.uid);
+      let data;
+
+      // 1️⃣ Try authenticated endpoint (saves to dashboard)
+      try {
+        data = await analyzeMessage(message, 'unclear', user.uid);
+      } catch (err: any) {
+        console.error('Protected analysis failed, trying public endpoint:', err);
+
+        // 2️⃣ Fallback to public endpoint so you still see a result
+        data = await analyzePublicMessage(message, 'unclear', user.uid);
+      }
+
       setResult(data);
-    } catch (error) {
-      console.error('Analysis failed:', error);
+    } catch (err) {
+      console.error('Analysis failed:', err);
+      setResult(null);
+      setError('Analysis failed. Please try again in a moment.');
     } finally {
       setLoading(false);
     }
@@ -51,6 +65,12 @@ export default function AnalyzePage() {
             <p className="text-muted-foreground mt-2">
               Analyze suspicious messages with our multi-agent AI system.
             </p>
+            {error && (
+              <Alert variant="destructive" className="mt-4">
+                <AlertTitle>Analysis failed</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
