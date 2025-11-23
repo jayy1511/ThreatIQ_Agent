@@ -5,6 +5,8 @@ from app.models.database import Database
 from app.tools.dataset_tools import phishing_dataset
 from agent import root_agent  # Import ADK root agent
 import logging
+from app.routers import metrics
+from app.routers import eval as eval_router
 
 # Configure logging
 logging.basicConfig(
@@ -87,6 +89,8 @@ from app.routers import analysis, profile, auth
 app.include_router(analysis.router, prefix="/api", tags=["Analysis"])
 app.include_router(profile.router, prefix="/api", tags=["Profile"])
 app.include_router(auth.router, prefix="/api", tags=["Auth"])
+app.include_router(metrics.router, prefix="/api")
+app.include_router(eval_router.router, prefix="/api")
 
 
 if __name__ == "__main__":
