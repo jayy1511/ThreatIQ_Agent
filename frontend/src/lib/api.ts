@@ -16,10 +16,13 @@ api.interceptors.request.use(async (config) => {
     const user = auth.currentUser;
     if (user) {
       const token = await user.getIdToken();
-      config.headers = {
-        ...(config.headers || {}),
-        Authorization: `Bearer ${token}`,
-      };
+
+      // Ensure headers object exists, then mutate it
+      if (!config.headers) {
+        config.headers = {};
+      }
+
+      (config.headers as any).Authorization = `Bearer ${token}`;
     }
   } catch (error) {
     console.error("Error attaching token:", error);
@@ -58,7 +61,6 @@ export const getUserProfile = async (userId: string) => {
   return response.data.profile;
 };
 
-
 export const getUserSummary = async (userId: string) => {
   const response = await api.get(`/api/profile/${userId}/summary`);
   return response.data;
@@ -66,9 +68,7 @@ export const getUserSummary = async (userId: string) => {
 
 export const getUserHistory = async (userId: string) => {
   const response = await api.get(`/api/profile/${userId}/history`);
-  // backend returns { history: [...] }
   return response.data.history;
 };
-
 
 export default api;
