@@ -7,6 +7,7 @@ from agent import root_agent  # Import ADK root agent
 import logging
 from app.routers import metrics
 from app.routers import eval as eval_router
+from app.routers import analysis, profile, auth
 
 # Configure logging
 logging.basicConfig(
@@ -23,20 +24,17 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# ----------------- CORS CONFIG -----------------
-origins = [
-    "http://localhost:3000",
-    "https://threat-iq-agent-b00ye3lnj-jay-patels-projects-9518309c.vercel.app/"
-]
-
+# ---------- CORS CONFIG (OPEN FOR DEMO) ----------
+# This allows your Vercel frontend (and localhost) to call the API.
+# For now we allow all origins to avoid mismatch problems.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],          # 👈 open CORS so Vercel is allowed
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-# -----------------------------------------------
+# -------------------------------------------------
 
 
 @app.on_event("startup")
@@ -89,15 +87,12 @@ async def health_check():
         raise HTTPException(status_code=503, detail="Service unhealthy")
 
 
-# Import and include routers
-from app.routers import analysis, profile, auth
-
+# Include routers
 app.include_router(analysis.router, prefix="/api", tags=["Analysis"])
 app.include_router(profile.router, prefix="/api", tags=["Profile"])
 app.include_router(auth.router, prefix="/api", tags=["Auth"])
 app.include_router(metrics.router, prefix="/api")
 app.include_router(eval_router.router, prefix="/api")
-
 
 if __name__ == "__main__":
     import uvicorn
