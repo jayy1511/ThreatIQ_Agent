@@ -14,6 +14,12 @@ class Settings(BaseSettings):
     firebase_private_key: str
     firebase_client_email: str
     
+    google_client_id: str
+    google_client_secret: str
+    google_redirect_uri: str
+    frontend_url: str
+    token_encryption_key: str
+    
     cors_origins: str = "http://localhost:3000"
     api_host: str = "0.0.0.0"
     api_port: int = 8000

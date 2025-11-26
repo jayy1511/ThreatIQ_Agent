@@ -9,6 +9,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/context/AuthContext';
 import { getUserSummary, getUserProfile } from '@/lib/api';
 import {
@@ -23,16 +24,30 @@ import {
   Pie,
   Cell,
 } from 'recharts';
-import { Shield, Target, TrendingUp, AlertTriangle } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { Shield, Target, TrendingUp, AlertTriangle, CheckCircle2, XCircle } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import GmailIntegration from '@/components/GmailIntegration';
 
 export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth();
   const [summary, setSummary] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [gmailToast, setGmailToast] = useState<'connected' | 'error' | null>(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const gmailParam = searchParams.get('gmail');
+    if (gmailParam === 'connected') {
+      setGmailToast('connected');
+      setTimeout(() => setGmailToast(null), 5000);
+    } else if (gmailParam === 'error') {
+      setGmailToast('error');
+      setTimeout(() => setGmailToast(null), 5000);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (user) {
@@ -93,6 +108,31 @@ export default function DashboardPage() {
         <h1 className="text-3xl font-bold tracking-tight mb-8">
           Security Dashboard
         </h1>
+
+        {gmailToast && (
+          <div className="mb-6">
+            {gmailToast === 'connected' ? (
+              <Alert className="border-green-200 bg-green-50 dark:bg-green-950 dark:border-green-800">
+                <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+                <AlertDescription className="text-green-800 dark:text-green-200">
+                  Gmail connected successfully! You can now triage your inbox.
+                </AlertDescription>
+              </Alert>
+            ) : (
+              <Alert variant="destructive">
+                <XCircle className="h-4 w-4" />
+                <AlertDescription>
+                  Failed to connect Gmail. Please try again.
+                </AlertDescription>
+              </Alert>
+            )}
+          </div>
+        )}
+
+        {/* Gmail Integration Section */}
+        <div className="mb-8">
+          <GmailIntegration />
+        </div>
 
         {/* Stats Overview */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">

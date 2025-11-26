@@ -70,3 +70,71 @@ class InteractionLog(BaseModel):
     was_correct: Optional[bool]
     timestamp: datetime = Field(default_factory=datetime.utcnow)
     session_id: str
+
+
+class GmailStatusResponse(BaseModel):
+    """Gmail connection status response."""
+    connected: bool
+    email: Optional[str] = None
+    scopes: Optional[List[str]] = None
+
+
+class GmailConnectResponse(BaseModel):
+    """Gmail OAuth connect URL response."""
+    url: str
+
+
+class GmailTriageRequest(BaseModel):
+    """Gmail triage request parameters."""
+    limit: Optional[int] = Field(10, ge=1, le=50, description="Max messages to process")
+    mark_spam: Optional[bool] = Field(False, description="Mark phishing as spam")
+    archive_safe: Optional[bool] = Field(False, description="Archive safe messages")
+
+
+class GmailTriageResult(BaseModel):
+    """Individual message triage result."""
+    message_id: str
+    from_: str = Field(alias="from")
+    subject: str
+    label: str
+    confidence: float
+    reasons: List[str]
+    label_applied: bool
+    success: bool
+    error: Optional[str] = None
+    
+    class Config:
+        populate_by_name = True
+
+
+class GmailTriageResponse(BaseModel):
+    """Gmail triage operation response."""
+    processed: int
+    results: List[GmailTriageResult]
+
+
+class GmailTriageRecord(BaseModel):
+    """Gmail triage history record."""
+    id: str = Field(alias="_id")
+    user_id: str
+    gmail_message_id: str
+    thread_id: str
+    from_: str = Field(alias="from")
+    subject: str
+    date: str
+    snippet: str
+    body_excerpt: str
+    label: str
+    confidence: float
+    reasons: List[str]
+    label_applied: bool
+    created_at: datetime
+    
+    class Config:
+        populate_by_name = True
+
+
+class GmailHistoryResponse(BaseModel):
+    """Gmail triage history response."""
+    items: List[GmailTriageRecord]
+

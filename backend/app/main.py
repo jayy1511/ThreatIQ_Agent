@@ -7,7 +7,7 @@ from agent import root_agent
 import logging
 from app.routers import metrics
 from app.routers import eval as eval_router
-from app.routers import analysis, profile, auth
+from app.routers import analysis, profile, auth, gmail
 
 logging.basicConfig(
     level=logging.INFO,
@@ -24,7 +24,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],         
+    allow_origins=settings.cors_origins_list,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -35,6 +35,27 @@ app.add_middleware(
 async def startup_event():
     """Initialize services on startup."""
     logger.info("Starting ThreatIQ API...")
+
+    required_gmail_vars = [
+        'google_client_id',
+        'google_client_secret',
+        'google_redirect_uri',
+        'frontend_url',
+        'token_encryption_key'
+    ]
+    
+    missing_vars = []
+    for var in required_gmail_vars:
+        try:
+            value = getattr(settings, var)
+            if not value:
+                missing_vars.append(var.upper())
+        except AttributeError:
+            missing_vars.append(var.upper())
+    
+    if missing_vars:
+        logger.error(f"Missing required Gmail environment variables: {', '.join(missing_vars)}")
+        logger.error("Gmail integration will not work. Please set these variables in your .env file.")
 
     # Connect to MongoDB
     await Database.connect_db()
@@ -85,6 +106,7 @@ async def health_check():
 app.include_router(analysis.router, prefix="/api", tags=["Analysis"])
 app.include_router(profile.router, prefix="/api", tags=["Profile"])
 app.include_router(auth.router, prefix="/api", tags=["Auth"])
+app.include_router(gmail.router, prefix="/api", tags=["Gmail"])
 app.include_router(metrics.router, prefix="/api")
 app.include_router(eval_router.router, prefix="/api")
 

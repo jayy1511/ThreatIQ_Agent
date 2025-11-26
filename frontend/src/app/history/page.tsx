@@ -115,17 +115,17 @@ export default function HistoryPage() {
               return (
                 <Card key={item.id ?? timeLabel + item.message}>
                   <CardHeader className="flex flex-row items-start justify-between gap-4">
-                    <div className="space-y-1">
-                      <CardTitle className="text-sm font-semibold">
+                    <div className="space-y-1 min-w-0 flex-1">
+                      <CardTitle className="text-sm font-semibold break-words">
                         {item.message?.slice(0, 80) || 'No message text'}
                         {item.message && item.message.length > 80 && '…'}
                       </CardTitle>
                       <CardDescription className="flex items-center gap-2 text-xs">
-                        <Clock className="h-3 w-3" />
+                        <Clock className="h-3 w-3 flex-shrink-0" />
                         <span>{timeLabel}</span>
                       </CardDescription>
                     </div>
-                    <div className="flex flex-col items-end gap-1">
+                    <div className="flex flex-col items-end gap-1 flex-shrink-0">
                       <Badge
                         variant={
                           isPhishing ? 'destructive' : isSafe ? 'outline' : 'secondary'
@@ -135,20 +135,20 @@ export default function HistoryPage() {
                         {label}
                       </Badge>
                       {confidence !== null && (
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-xs text-muted-foreground whitespace-nowrap">
                           Confidence: {confidence}%
                         </span>
                       )}
                       {item.was_correct != null && (
-                        <span className="flex items-center gap-1 text-xs">
+                        <span className="flex items-center gap-1 text-xs whitespace-nowrap">
                           {item.was_correct ? (
                             <>
-                              <CheckCircle className="h-3 w-3 text-green-500" />
+                              <CheckCircle className="h-3 w-3 text-green-500 flex-shrink-0" />
                               <span className="text-green-500">You were right</span>
                             </>
                           ) : (
                             <>
-                              <AlertTriangle className="h-3 w-3 text-red-500" />
+                              <AlertTriangle className="h-3 w-3 text-red-500 flex-shrink-0" />
                               <span className="text-red-500">Your guess was incorrect</span>
                             </>
                           )}
@@ -158,7 +158,7 @@ export default function HistoryPage() {
                   </CardHeader>
                   <CardContent>
                     {item.message && (
-                      <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                      <p className="text-sm text-muted-foreground whitespace-pre-wrap break-words overflow-wrap-anywhere">
                         {item.message}
                       </p>
                     )}

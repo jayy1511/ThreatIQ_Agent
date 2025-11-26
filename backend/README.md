@@ -1,631 +1,371 @@
 # ThreatIQ Backend
 
-Multi-agent AI system for phishing detection and security training, built with Google ADK, FastAPI, and MongoDB.
-
-## Overview
-
-The ThreatIQ backend implements a sophisticated multi-agent architecture using Google's Agent Development Kit (ADK). The system coordinates five specialized AI agents to analyze messages, detect phishing attempts, retrieve relevant examples, manage user learning profiles, and generate personalized educational coaching.
-
-This backend serves as the core intelligence platform, exposing RESTful APIs for frontend consumption while maintaining session state, user profiles, and interaction history in MongoDB.
+FastAPI-based backend for the ThreatIQ phishing detection system featuring multi-agent AI orchestration and Gmail integration.
 
 ## Architecture
 
-### Multi-Agent System Design
+### Multi-Agent System
 
-The backend implements a sequential agent workflow pattern where each agent performs a specific task and passes its output to the next agent in the pipeline:
+The backend implements a sequential multi-agent workflow using Google's Agent Development Kit (ADK):
+
+1. **Classifier Agent** - Analyzes messages for phishing indicators using Gemini 2.0 Flash
+2. **Evidence Agent** - Searches phishing dataset for similar examples using TF-IDF vectorization
+3. **Memory Agent** - Manages user profiles and updates performance statistics
+4. **Coach Agent** - Generates personalized educational content and interactive quizzes
+5. **Root Orchestrator** - Coordinates agent workflow and maintains session state
+
+### Gmail Integration Services
+
+- **Crypto Service** - Fernet symmetric encryption for OAuth token storage
+- **Gmail OAuth Service** - OAuth 2.0 authorization code flow with state-based CSRF protection
+- **Gmail Client** - Gmail API wrapper for message retrieval, parsing, and label management
+- **Gmail Triage Service** - Orchestrates inbox analysis using ThreatIQ classification pipeline
+
+## Directory Structure
 
 ```
-User Request
-     │
-     ├──> Root Orchestrator Agent (agent.py)
-     │    └──> Session Management (InMemorySessionService)
-     │
-     ├──> 1. Classifier Agent ──────────────┐
-     │    - Model: Gemini 2.0 Flash          │
-     │    - Input: Raw message text          │
-     │    - Output: {label, confidence,      │
-     │              reason_tags, explanation}│
-     │    - Techniques: Few-shot prompting,  │
-     │                  JSON mode output    <─┘
-     │
-     ├──> 2. Evidence Agent ────────────────┐
-     │    - Tools: TF-IDF vectorization      │
-     │    - Input: Message + classification  │
-     │    - Output: Top 3 similar examples   │
-     │    - Techniques: Cosine similarity    │
-     │                  on TF-IDF vectors   <─┘
-     │
-     ├──> 3. Memory Agent ──────────────────┐
-     │    - Database: MongoDB Atlas          │
-     │    - Input: User ID + classification  │
-     │    - Output: Updated profile stats    │
-     │    - Functions: CRUD operations,      │
-     │                 weak spot detection  <─┘
-     │
-     ├──> 4. Coach Agent ───────────────────┐
-     │    - Model: Gemini 2.0 Flash          │
-     │    - Input: All previous outputs      │
-     │    - Output: {explanation, tips,      │
-     │              similar_examples, quiz}  │
-     │    - Tailored to user weaknesses     <─┘
-     │
-     └──> Interaction Logging (MongoDB)
-          - Complete request/response
-          - Session ID for tracing
-          - Timestamp for analytics
+backend/
+├── agent.py                    # Root orchestrator agent
+├── app/
+│   ├── main.py                # FastAPI application entry point
+│   ├── config.py              # Environment configuration with validation
+│   ├── agents/                # Specialized AI agents
+│   │   ├── classifier.py      # Phishing classification with Gemini
+│   │   ├── evidence.py        # TF-IDF similarity search
+│   │   ├── memory.py          # User profile management
+│   │   └── coach.py           # Educational content generation
+│   ├── models/                # Data models and schemas
+│   │   ├── database.py        # MongoDB connection and utilities
+│   │   └── schemas.py         # Pydantic request/response models
+│   ├── routers/               # API route handlers
+│   │   ├── analysis.py        # Message analysis endpoints
+│   │   ├── profile.py         # User profile and history
+│   │   ├── auth.py            # Firebase token verification
+│   │   ├── gmail.py           # Gmail integration endpoints
+│   │   ├── metrics.py         # System metrics and analytics
+│   │   └── eval.py            # Model evaluation endpoint
+│   ├── services/              # Business logic services
+│   │   ├── crypto.py          # Token encryption/decryption
+│   │   ├── gmail_oauth.py     # OAuth 2.0 flow implementation
+│   │   ├── gmail_client.py    # Gmail API wrapper
+│   │   └── gmail_triage.py    # Triage orchestration
+│   └── tools/                 # Custom ADK tools
+│       ├── adk_tools.py       # Core tool implementations
+│       ├── dataset_tools.py   # Dataset loading and search
+│       └── profile_tools.py   # Profile CRUD operations
+├── data/                      # Phishing dataset (CSV)
+├── requirements.txt           # Python dependencies
+└── .env.example              # Environment variable template
 ```
 
-### Agent Implementations
+## Setup
 
-#### 1. Classifier Agent (`app/agents/classifier.py`)
+### Prerequisites
 
-Analyzes message content to determine phishing likelihood using natural language understanding.
+- Python 3.9 or higher
+- MongoDB Atlas account
+- Firebase project with service account
+- Google AI Studio API key
+- Google Cloud project (for Gmail integration)
 
-**Key Features:**
-- Structured system instruction defining phishing indicators
-- JSON mode output for reliable parsing
-- Multi-strategy fallback for JSON extraction
-- Confidence calibration based on evidence strength
-- Reason tagging for explainability
+### Installation
 
-**Phishing Indicators:**
-- suspicious_link, urgency, request_info, impersonation
-- spelling_errors, too_good_offer, sender_mismatch
-- threatening_language, generic_greeting, suspicious_attachment
+1. **Create virtual environment**
+   ```bash
+   python -m venv venv
+   # Windows
+   venv\Scripts\activate
+   # macOS/Linux
+   source venv/bin/activate
+   ```
 
-**Output Schema:**
-```python
-{
-    "label": str,           # "phishing" | "safe" | "unclear"
-    "confidence": float,    # 0.0 to 1.0
-    "reason_tags": list,    # E.g., ["urgency", "suspicious_link"]
-    "explanation": str      # Human-readable justification
-}
-```
+2. **Install dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-#### 2. Evidence Agent (`app/agents/evidence.py`)
+3. **Configure environment**
+   ```bash
+   cp .env.example .env
+   ```
+   
+   Required variables:
+   ```bash
+   # Gemini API
+   GEMINI_API_KEY=your_gemini_api_key
+   
+   # MongoDB
+   MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/
+   MONGODB_DB_NAME=threatiq
+   
+   # Firebase Admin SDK
+   FIREBASE_PROJECT_ID=your_project_id
+   FIREBASE_PRIVATE_KEY=your_private_key
+   FIREBASE_CLIENT_EMAIL=your_service_account@project.iam.gserviceaccount.com
+   
+   # Gmail OAuth 2.0
+   GOOGLE_CLIENT_ID=your_client_id.apps.googleusercontent.com
+   GOOGLE_CLIENT_SECRET=your_client_secret
+   GOOGLE_REDIRECT_URI=http://localhost:8000/api/gmail/callback
+   FRONTEND_URL=http://localhost:3000
+   TOKEN_ENCRYPTION_KEY=your_fernet_encryption_key
+   
+   # CORS
+   CORS_ORIGINS=http://localhost:3000,http://localhost:3001
+   
+   # API Configuration
+   API_HOST=0.0.0.0
+   API_PORT=8000
+   ENVIRONMENT=development
+   ```
 
-Retrieves similar phishing examples from the dataset using information retrieval techniques.
+4. **Generate encryption key**
+   ```python
+   python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+   ```
 
-**Key Features:**
-- TF-IDF vectorization of phishing dataset
-- Cosine similarity search
-- Category-based filtering
-- Sample diversity to show varied examples
-
-**Process:**
-1. Load phishing dataset on initialization
-2. Compute TF-IDF matrix for all messages
-3. Transform query message to TF-IDF vector
-4. Calculate cosine similarities
-5. Return top K results with category and similarity score
-
-#### 3. Memory Agent (`app/agents/memory.py`)
-
-Manages user learning profiles and performance tracking in MongoDB.
-
-**Profile Schema:**
-```python
-{
-    "user_id": str,
-    "total_messages": int,
-    "correct_guesses": int,
-    "by_category": {
-        "fake_bank": {"seen": int, "mistakes": int},
-        # ... other categories
-    },
-    "weak_spots": list,      # Categories with >40% error rate
-    "last_updated": datetime
-}
-```
-
-**Functions:**
-- `load_user_profile`: Retrieve or create profile
-- `update_user_profile`: Increment counters and recalculate weak spots
-- `get_user_summary`: Aggregate statistics for dashboard
-
-#### 4. Coach Agent (`app/agents/coach.py`)
-
-Generates personalized educational content based on classification results and user history.
-
-**Key Features:**
-- Adaptive explanations based on user performance
-- Contextual safety tips tailored to threat type
-- Similar examples with explanatory context
-- Auto-generated quiz questions for active learning
-
-**Output Schema:**
-```python
-{
-    "explanation": str,          # Detailed coaching message
-    "tips": list,                # 3-5 actionable safety tips
-    "similar_examples": list,    # Examples with context
-    "quiz": {
-        "question": str,
-        "options": list,         # 3-4 multiple choice
-        "correct_answer": str
-    }
-}
-```
-
-### Custom ADK Tools
-
-All tools follow the Google ADK specification and are registered in `app/tools/adk_tools.py`:
-
-1. **load_dataset**: Loads phishing CSV, computes TF-IDF vectors, returns dataset size
-2. **search_similar_messages**: Takes message text and category, returns similar examples
-3. **get_user_profile**: Retrieves user profile from MongoDB, creates if missing
-4. **update_user_profile**: Updates performance stats, detects new weak spots
-5. **log_interaction**: Records full interaction to interactions collection
+5. **Start server**
+   ```bash
+   uvicorn app.main:app --reload
+   ```
+   
+   Server runs on http://localhost:8000
 
 ## API Endpoints
 
-### Analysis Endpoints (`app/routers/analysis.py`)
+### Analysis
 
-#### POST `/api/analyze`
-**Authentication:** Required (Firebase token)  
-**Description:** Full analysis with profile tracking and dashboard updates
+- `POST /api/analyze-public` - Public analysis without authentication
+- `POST /api/analyze` - Full analysis with profile tracking (requires auth)
 
-**Request:**
-```json
+### Gmail Integration
+
+- `GET /api/gmail/connect` - Generate OAuth authorization URL (requires auth)
+- `GET /api/gmail/callback` - OAuth callback handler (state validated)
+- `GET /api/gmail/status` - Check Gmail connection status (requires auth)
+- `POST /api/gmail/disconnect` - Revoke tokens and disconnect (requires auth)
+- `POST /api/gmail/triage` - Run inbox triage (requires auth)
+- `GET /api/gmail/history` - Get triage history (requires auth)
+
+### User Profile
+
+- `GET /api/profile/{user_id}` - Get user profile and statistics (requires auth)
+- `GET /api/profile/{user_id}/summary` - Get learning progress summary (requires auth)
+- `GET /api/profile/{user_id}/history` - Get recent analysis history (requires auth)
+
+### System
+
+- `GET /` - API information and version
+- `GET /health` - Health check and database status
+- `GET /api/metrics` - System-wide metrics (requires admin auth)
+- `POST /admin/eval-sample` - Run model evaluation (requires admin auth)
+
+### Interactive Documentation
+
+- Swagger UI: http://localhost:8000/docs
+- ReDoc: http://localhost:8000/redoc
+
+## MongoDB Collections
+
+### gmail_tokens
+
+Stores encrypted OAuth tokens for Gmail integration:
+
+```javascript
 {
-  "message": "string",
-  "user_guess": "phishing" | "safe" | "unclear",
-  "user_id": "string"
+  user_id: "firebase_uid",              // Unique index
+  email: "user@gmail.com",
+  scopes: ["gmail.readonly", "gmail.modify", "userinfo.email"],
+  encrypted_access_token: "encrypted_string",
+  encrypted_refresh_token: "encrypted_string",
+  expiry_ts: 1234567890,               // Unix timestamp
+  created_at: ISODate("2025-01-01T00:00:00.000Z"),
+  updated_at: ISODate("2025-01-01T00:00:00.000Z")
 }
 ```
 
-**Response:**
-```json
+### gmail_triage
+
+Stores Gmail triage history and results:
+
+```javascript
 {
-  "classification": { /* Classifier output */ },
-  "similar_examples": [ /* Evidence output */ ],
-  "coach_response": { /* Coach output */ },
-  "user_performance": { /* Memory output */ }
+  user_id: "firebase_uid",
+  gmail_message_id: "message_id",
+  thread_id: "thread_id",
+  from: "sender@example.com",
+  subject: "Email subject",
+  date: "Mon, 1 Jan 2025 12:00:00",
+  snippet: "Email preview text...",
+  body_excerpt: "First 500 chars of body...",
+  label: "SAFE" | "SUSPICIOUS" | "PHISHING",
+  confidence: 0.95,
+  reasons: ["reason_tag1", "reason_tag2"],
+  label_applied: true,
+  created_at: ISODate("2025-01-01T00:00:00.000Z")
 }
 ```
 
-#### POST `/api/analyze-public`
-**Authentication:** None  
-**Description:** Public endpoint for testing, does not save to profiles
+Indexes: `(user_id, created_at)` descending
 
-### Profile Endpoints (`app/routers/profile.py`)
+### user_profiles
 
-#### GET `/api/profile/{user_id}`
-**Authentication:** Required  
-**Description:** Retrieve full user profile and summary
+Stores user performance statistics:
 
-**Response:**
-```json
+```javascript
 {
-  "profile": {
-    "user_id": "string",
-    "total_messages": 42,
-    "correct_guesses": 35,
-    "by_category": { /* category stats */ }
+  user_id: "firebase_uid",              // Unique index
+  total_messages: 100,
+  correct_guesses: 85,
+  by_category: {
+    fake_bank: { seen: 20, mistakes: 2 },
+    // ... other categories
   },
-  "summary": {
-    "accuracy": 0.83,
-    "weak_spots": ["fake_shipping"],
-    "strongest_categories": ["fake_bank"]
-  }
+  weak_spots: ["tax_scam", "prize_scam"],
+  created_at: ISODate(),
+  last_active: ISODate()
 }
 ```
 
-#### GET `/api/profile/{user_id}/summary`
-**Authentication:** Required  
-**Description:** Get condensed learning progress summary
+### interaction_logs
 
-#### GET `/api/profile/{user_id}/history`
-**Authentication:** Required  
-**Description:** Retrieve recent analysis history (last 50 interactions)
+Stores complete analysis history:
 
-**Response:**
-```json
+```javascript
 {
-  "history": [
-    {
-      "id": "string",
-      "message": "string",
-      "classification": { /* label, confidence */ },
-      "was_correct": true,
-      "timestamp": "ISO 8601"
-    }
-  ]
+  user_id: "firebase_uid",
+  session_id: "uuid",
+  message: "Original message text",
+  classification: { label, confidence, reason_tags, explanation },
+  user_guess: "phishing",
+  was_correct: true,
+  timestamp: ISODate(),
+  category: "fake_bank"
 }
 ```
 
-### Admin Endpoints
+## Security
 
-#### GET `/api/metrics`
-**Authentication:** Required  
-**Description:** System-wide observability metrics
+### Authentication
 
-**Response:**
-```json
-{
-  "total_users": 127,
-  "total_messages": 1543,
-  "total_interactions": 1543,
-  "avg_accuracy": 0.79
-}
+All protected endpoints require Firebase ID token in Authorization header:
+
+```
+Authorization: Bearer <firebase_id_token>
 ```
 
-#### POST `/api/admin/eval-sample`
-**Authentication:** Required  
-**Description:** Run evaluation agent on recent interactions
+Token verification performed by `verify_firebase_token` dependency in `app/routers/auth.py`.
 
-**Parameters:**
-- `limit`: Number of interactions to evaluate (default: 5, max: 20)
+### Gmail OAuth Security
 
-**Response:**
-```json
-{
-  "evaluated": 5,
-  "sample_size": 5,
-  "message": "Evaluation completed."
-}
-```
+- State parameter binds OAuth request to Firebase user ID
+- Tokens encrypted at rest using Fernet (AES-128-CBC + HMAC)
+- Server-side token exchange (frontend never sees tokens)
+- Automatic token refresh before expiry
+- HTTPS-only OAuth redirects in production
 
-## Database Schema
+### Data Protection
 
-### Collections
+- Environment variables for all secrets
+- No hardcoded credentials in source code
+- CORS restricted to specific origins
+- MongoDB connection uses TLS encryption
+- Structured logging (no token/key logging)
 
-#### user_profiles
-**Purpose:** Store user learning statistics and progress tracking
+## Development
 
-**Indexes:**
-- `user_id` (unique)
-- `last_updated`
-
-**Average Document Size:** ~500 bytes
-
-#### interactions
-**Purpose:** Log all message analysis interactions for observability and evaluation
-
-**Indexes:**
-- `user_id`
-- `timestamp` (descending)
-- `session_id`
-
-**Average Document Size:** ~2KB
-
-**Retention:** Unlimited (consider implementing TTL for production)
-
-#### model_evaluations
-**Purpose:** Store evaluation agent results for model performance tracking
-
-**Indexes:**
-- `interaction_id`
-- `evaluated_at` (descending)
-
-**Average Document Size:** ~400 bytes
-
-## Environment Configuration
-
-### Required Variables
+### Running Tests
 
 ```bash
-# Google Gemini API
-GEMINI_API_KEY=your_api_key_here
-
-# MongoDB Atlas
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net
-MONGODB_DB_NAME=threatiq
-
-# Firebase Admin SDK
-FIREBASE_PROJECT_ID=your-project-id
-FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
-FIREBASE_CLIENT_EMAIL=firebase-adminsdk@your-project.iam.gserviceaccount.com
-
-# Server Configuration
-ENVIRONMENT=development
-CORS_ORIGINS=http://localhost:3000,https://your-frontend.vercel.app
-LOG_LEVEL=INFO
+pytest tests/
 ```
 
-### Optional Variables
+### Code Quality
 
 ```bash
-# Rate Limiting
-MAX_REQUESTS_PER_MINUTE=15
+# Linting
+flake8 app/
 
-# Database Connection Pool
-MONGODB_MAX_POOL_SIZE=10
-MONGODB_MIN_POOL_SIZE=1
+# Type checking
+mypy app/
 
-# Session Management
-SESSION_TIMEOUT_MINUTES=60
+# Format code
+black app/
 ```
 
-## Setup Instructions
+### Database Migrations
 
-### 1. Create Virtual Environment
+MongoDB is schema-less. Indexes are created automatically on first use.
 
-```bash
-cd backend
-python -m venv venv
+To manually create indexes:
 
-# Activate (Windows)
-venv\Scripts\activate
-
-# Activate (macOS/Linux)
-source venv/bin/activate
-```
-
-### 2. Install Dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-**Core Dependencies:**
-- fastapi==0.109.0
-- uvicorn[standard]==0.27.0
-- motor==3.3.2 (async MongoDB driver)
-- google-generativeai==0.8.3
-- genai-agents (Google ADK)
-- firebase-admin==6.4.0
-- pydantic==2.5.3
-- python-dotenv==1.0.0
-- scikit-learn==1.4.0
-
-### 3. Configure Environment
-
-```bash
-cp .env.example .env
-# Edit .env with your credentials
-```
-
-**Getting Credentials:**
-
-1. **Gemini API Key**: Visit [Google AI Studio](https://makersuite.google.com/app/apikey)
-2. **MongoDB URI**: Create free cluster at [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
-3. **Firebase**: Create project at [Firebase Console](https://console.firebase.google.com/), download service account JSON
-
-### 4. Prepare Dataset
-
-Place your phishing dataset CSV in `data/phishing_dataset.csv` with columns:
-- `message`: The phishing message text
-- `label`: "phishing" or "safe"
-- `category`: Optional category classification
-
-### 5. Start Server
-
-```bash
-# Development with auto-reload
-uvicorn app.main:app --reload
-
-# Production
-uvicorn app.main:app --host 0.0.0.0 --port 8000
-```
-
-### 6. Verify Installation
-
-```bash
-# Check health endpoint
-curl http://localhost:8000/health
-
-# View API docs
-open http://localhost:8000/docs
-```
-
-## Testing
-
-### Automated Test Suite
-
-Run the comprehensive test suite:
-
-```bash
-python test_backend.py
-```
-
-**Tests Include:**
-- Classifier agent accuracy across phishing categories
-- Evidence retrieval relevance and diversity
-- Profile creation and update correctness
-- Coach output completeness and quiz generation
-- End-to-end multi-agent workflow integration
-
-### Manual Testing with Swagger UI
-
-1. Navigate to http://localhost:8000/docs
-2. Expand `/api/analyze-public` endpoint
-3. Click "Try it out"
-4. Enter test message and parameters
-5. Execute and review response
-
-### Sample Test Cases
-
-**Fake Bank Phishing:**
-```
-URGENT: Your Chase account has been locked due to suspicious activity. 
-Verify your identity now: http://chase-verify.net/login
-```
-
-**Fake Shipping:**
-```
-Your USPS package is awaiting delivery. Confirm address and pay $2.95 
-shipping fee: http://usps-tracking.com/confirm
-```
-
-**Legitimate Message:**
-```
-Hi team, reminder that our weekly standup is at 10am tomorrow. Please 
-have your updates ready. See you then!
+```python
+# In MongoDB shell or Compass
+db.gmail_tokens.createIndex({ user_id: 1 }, { unique: true })
+db.gmail_triage.createIndex({ user_id: 1, created_at: -1 })
+db.user_profiles.createIndex({ user_id: 1 }, { unique: true })
+db.interaction_logs.createIndex({ user_id: 1, timestamp: -1 })
 ```
 
 ## Deployment
 
-### Render.com Deployment
+### Production Environment Variables
 
-1. **Create Web Service**
-   - Connect GitHub repository
-   - Select backend directory as root
+Update `.env` for production:
 
-2. **Build Settings**
-   ```
-   Build Command: pip install -r requirements.txt
-   Start Command: uvicorn app.main:app --host 0.0.0.0 --port 10000
-   ```
-
-3. **Environment Variables**
-   - Add all variables from `.env`
-   - Set `ENVIRONMENT=production`
-
-4. **Health Check**
-   - Path: `/health`
-   - Expected response: `{"status": "healthy"}`
-
-### Railway Deployment
-
-1. **Create New Project**
-   - Import from GitHub
-   - Select backend service
-
-2. **Configure Settings**
-   ```
-   Start Command: uvicorn app.main:app --host 0.0.0.0 --port $PORT
-   ```
-
-3. **Add Variables**
-   - Import from `.env`
-   - Update `CORS_ORIGINS` with production frontend URL
-
-### Performance Optimization
-
-**For Production:**
-- Increase Uvicorn workers: `--workers 4`
-- Enable MongoDB connection pooling
-- Implement Redis caching for user profiles
-- Add rate limiting middleware
-- Enable response compression
-
-## Observability
-
-### Logging
-
-All logs use Python's standard logging module with structured format:
-
-```python
-logger.info(
-    "Analysis completed",
-    extra={
-        "session_id": session_id,
-        "user_id": user_id,
-        "classification": label,
-        "duration_ms": duration
-    }
-)
+```bash
+GOOGLE_REDIRECT_URI=https://your-backend.onrender.com/api/gmail/callback
+FRONTEND_URL=https://your-frontend.vercel.app
+CORS_ORIGINS=https://your-frontend.vercel.app
+ENVIRONMENT=production
 ```
 
-### Monitoring Recommendations
+### Render.com Deployment
 
-1. **Application Performance**
-   - Track API response times per endpoint
-   - Monitor Gemini API latency and errors
-   - Measure MongoDB query performance
+1. Build Command: `pip install -r requirements.txt`
+2. Start Command: `uvicorn app.main:app --host 0.0.0.0 --port 10000`
+3. Add all environment variables from `.env`
+4. Deploy
 
-2. **Business Metrics**
-   - Users registered per day
-   - Messages analyzed per day
-   - Average user accuracy trends
+### Health Monitoring
 
-3. **Error Tracking**
-   - Classification JSON parsing failures
-   - MongoDB connection issues
-   - Firebase token verification errors
-
-### Log Levels
-
-- **DEBUG**: Detailed diagnostic information
-- **INFO**: General operational messages
-- **WARNING**: Non-critical issues (e.g., fallback strategies used)
-- **ERROR**: Serious problems requiring attention
+Check `/health` endpoint for:
+- API status
+- Database connectivity
+- Dataset loading status
 
 ## Troubleshooting
 
 ### Common Issues
 
-**MongoDB Connection Timeout**
-```
-Fix: Ensure your IP is whitelisted in MongoDB Atlas network access settings
-```
+**Gmail OAuth errors**
 
-**Firebase Token Invalid**
-```
-Fix: Check that FIREBASE_PRIVATE_KEY has escaped newlines (\n not actual newlines)
-```
+- Verify `GOOGLE_REDIRECT_URI` matches Google Cloud Console settings exactly
+- Ensure user is added to test users in OAuth consent screen
+- Check `TOKEN_ENCRYPTION_KEY` is properly set
 
-**Gemini Rate Limit Exceeded**
-```
-Fix: Free tier allows 15 RPM. Implement request queuing or upgrade to paid tier
-```
+**Database connection fails**
 
-**Dataset Not Found**
-```
-Fix: Ensure data/phishing_dataset.csv exists and has correct columns
-```
+- Verify MongoDB Atlas network access allows your IP
+- Check connection string format and credentials
+- Ensure database user has read/write permissions
 
-### Debug Mode
+**Gemini API rate limits**
 
-Enable detailed logging:
+- Free tier: 15 requests per minute
+- Process fewer emails per triage (5-10 instead of 50)
+- Wait between consecutive triage runs
 
-```bash
-LOG_LEVEL=DEBUG uvicorn app.main:app --reload
-```
+**CORS errors**
 
-## Development Guidelines
-
-### Adding New Agents
-
-1. Create agent file in `app/agents/`
-2. Follow the pattern: `__init__` with model setup, async method for logic
-3. Register in `agent.py` orchestrator workflow
-4. Add corresponding API endpoints if external access needed
-
-### Creating Custom Tools
-
-1. Define function in `app/tools/adk_tools.py`
-2. Follow ADK tool specification with docstring and type hints
-3. Add to `ADK_TOOLS` dictionary
-4. Reference in agent implementations
-
-### Code Quality
-
-- Use type hints throughout
-- Write docstrings for all public functions
-- Run `black` for code formatting
-- Use `mypy` for static type checking
-- Follow PEP 8 style guidelines
-
-## Performance Benchmarks
-
-Measured on free tier deployment:
-
-| Operation | Average Time |
-|-----------|-------------|
-| Classification (Gemini) | 1.2s |
-| Evidence retrieval (TF-IDF) | 0.15s |
-| Profile update (MongoDB) | 0.08s |
-| Coach generation (Gemini) | 1.5s |
-| **Total workflow** | **3.2s** |
-| Cold start penalty | +2-3s |
-
-## Security Best Practices
-
-1. **Never commit** `.env` or service account JSON files
-2. **Rotate credentials** periodically (API keys, database passwords)
-3. **Validate user input** using Pydantic models
-4. **Verify Firebase tokens** on every protected endpoint
-5. **Use environment variables** for all secrets
-6. **Enable MongoDB IP whitelist** in production
-7. **Implement rate limiting** to prevent abuse
+- Add frontend URL to `CORS_ORIGINS` environment variable
+- Ensure format: `http://localhost:3000,https://production-url.com`
+- Restart backend after changing CORS settings
 
 ## License
 
 MIT License
 
-## Contributing
+## Contact
 
-This is a capstone project, but suggestions and bug reports are welcome via GitHub issues.
+For backend-specific issues, please open an issue on the GitHub repository.

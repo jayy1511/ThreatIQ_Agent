@@ -66,4 +66,34 @@ export const getUserHistory = async (userId: string) => {
   return response.data.history;
 };
 
+export const getGmailStatus = async () => {
+  const response = await api.get("/api/gmail/status");
+  return response.data;
+};
+
+export const getGmailConnectUrl = async () => {
+  const response = await api.get("/api/gmail/connect");
+  return response.data;
+};
+
+export const disconnectGmail = async () => {
+  const response = await api.post("/api/gmail/disconnect");
+  return response.data;
+};
+
+export const runGmailTriage = async (params: {
+  limit?: number;
+  mark_spam?: boolean;
+  archive_safe?: boolean;
+}) => {
+  const response = await api.post("/api/gmail/triage", params);
+  return response.data;
+};
+
+export const getGmailHistory = async (limit: number = 50) => {
+  const response = await api.get(`/api/gmail/history?limit=${limit}`);
+  return response.data;
+};
+
 export default api;
+

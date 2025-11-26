@@ -111,7 +111,7 @@ MESSAGE:
                     result["label"] = "phishing"
                 else:
                     result["label"] = "unclear"
-l
+
             if result["label"] not in ["phishing", "safe", "unclear"]:
                 result["label"] = "unclear"
 
