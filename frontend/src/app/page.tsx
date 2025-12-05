@@ -48,7 +48,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             <FeatureCard
               icon={<Shield className="h-10 w-10 text-primary" />}
               title="Multi-Agent AI"
@@ -63,6 +63,11 @@ export default function Home() {
               icon={<CheckCircle className="h-10 w-10 text-primary" />}
               title="Real-time Evidence"
               description="See similar real-world phishing examples to understand exactly why a message is suspicious."
+            />
+            <FeatureCard
+              icon={<Zap className="h-10 w-10 text-primary" />}
+              title="Gmail Integration"
+              description="Connect your Gmail account to automatically scan incoming emails for phishing threats and malicious content."
             />
           </div>
         </div>
