@@ -5,40 +5,26 @@ python-dotenv==1.0.1
 pydantic==2.12.4
 pydantic-settings==2.12.0
 
-# Google ADK and AI (required for capstone)
-google-adk==1.19.0
-google-generativeai==0.8.5
-google-ai-generativelanguage==0.6.15
-
 # Database
 pymongo==4.15.4
 motor==3.7.1
 
-# Firebase Admin
+# Firebase Admin (used in app/routers/auth.py)
 firebase-admin==7.1.0
 
-# File handling
-python-multipart==0.0.20
-aiofiles==25.1.0
+# HTTP (used)
+httpx==0.28.1
 
-# ML & Data
+# ML & Data (used in app/tools/adk_tools.py)
 numpy==2.3.5
 pandas==2.3.3
 scikit-learn==1.7.2
 
-# CORS and Security
-python-jose[cryptography]==3.5.0
-passlib[bcrypt]==1.7.4
+# Gemini (used in app/agents/classifier.py and coach.py)
+google-generativeai==0.8.5
+google-ai-generativelanguage==0.6.15
 
-# Rate Limiting
-slowapi==0.1.9
-
-# Testing
-pytest==9.0.1
-pytest-asyncio==1.3.0
-httpx==0.28.1
-
-# Gmail API and OAuth
+# Gmail API and OAuth (used in app/services/gmail_client.py and routers/gmail.py)
 google-api-python-client==2.155.0
 google-auth==2.37.0
 google-auth-oauthlib==1.2.1

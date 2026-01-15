@@ -1,5 +1,4 @@
-import google.generativeai as genai
-from app.config import settings
+from app.llm.gemini_client import get_gemini_client
 from typing import Dict, List, Optional
 import logging
 import json
@@ -14,7 +13,7 @@ class CoachAgent:
     """
     
     def __init__(self):
-        self.model = genai.GenerativeModel('gemini-2.0-flash')
+        self.gemini_client = get_gemini_client()
     
     async def generate_coaching(
         self,
@@ -40,16 +39,16 @@ class CoachAgent:
                 message, classification, similar_examples, learning_context
             )
             
-            response = self.model.generate_content(
-                prompt,
-                generation_config=genai.types.GenerationConfig(
-                    temperature=0.7,
-                    top_p=0.9,
-                    top_k=40,
-                )
+            response_text = await self.gemini_client.generate(
+                prompt=prompt,
+                system_instruction="",
+                generation_config={
+                    "temperature": 0.7,
+                    "top_p": 0.9,
+                    "top_k": 40,
+                },
+                use_cache=False  # Coaching should be personalized, not cached
             )
-            
-            response_text = response.text.strip()
             if response_text.startswith('```'):
                 response_text = response_text.split('```')[1]
                 if response_text.startswith('json'):

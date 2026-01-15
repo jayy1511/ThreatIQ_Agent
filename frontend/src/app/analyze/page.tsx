@@ -41,6 +41,11 @@ export default function AnalyzePage() {
       return;
     }
 
+    // Prevent double submission
+    if (loading) {
+      return;
+    }
+
     setError(null);
     setLoading(true);
 
@@ -50,16 +55,33 @@ export default function AnalyzePage() {
       try {
         data = await analyzeMessage(message, 'unclear', user.uid);
       } catch (err: any) {
-        console.error('Protected analysis failed, trying public endpoint:', err);
+        const status = err.response?.status;
 
-        data = await analyzePublicMessage(message, 'unclear', user.uid);
+        // Only fall back to public endpoint for auth errors (401/403)
+        // Do NOT fallback for 500 errors - those indicate real problems
+        if (status === 401 || status === 403) {
+          console.warn('Auth error, falling back to public endpoint:', err);
+          data = await analyzePublicMessage(message, 'unclear', user.uid);
+        } else if (status === 429) {
+          setError('Quota gratuite atteinte. Réessaie plus tard ou utilise une autre clé API.');
+          return;
+        } else {
+          // For all other errors (including 500), don't fallback
+          throw err;
+        }
       }
 
       setResult(data);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Analysis failed:', err);
       setResult(null);
-      setError('Analysis failed. Please try again in a moment.');
+
+      // Handle different error types
+      if (err.response?.status === 429) {
+        setError('Quota gratuite atteinte. Réessaie plus tard.');
+      } else {
+        setError('Analysis failed. Please try again in a moment.');
+      }
     } finally {
       setLoading(false);
     }
@@ -129,10 +151,10 @@ export default function AnalyzePage() {
                   {/* Verdict Card */}
                   <Card
                     className={`border-l-4 ${result.classification.label === 'phishing'
-                        ? 'border-l-red-500'
-                        : result.classification.label === 'safe'
-                          ? 'border-l-green-500'
-                          : 'border-l-yellow-500'
+                      ? 'border-l-red-500'
+                      : result.classification.label === 'safe'
+                        ? 'border-l-green-500'
+                        : 'border-l-yellow-500'
                       }`}
                   >
                     <CardHeader>

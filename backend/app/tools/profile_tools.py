@@ -58,13 +58,15 @@ class InteractionLogger:
         user_guess: str,
         classification: dict,
         was_correct: bool,
-        session_id: str
+        session_id: str,
+        request_id: str
     ) -> bool:
-        """Log interaction using ADK tool."""
+        """Log interaction using ADK tool with idempotency."""
         return await log_interaction(
             user_id=user_id,
             message=message,
             classification=classification,
             was_correct=was_correct,
-            session_id=session_id
+            session_id=session_id,
+            request_id=request_id
         )

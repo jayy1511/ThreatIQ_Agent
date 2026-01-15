@@ -16,8 +16,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-import google.generativeai as genai
-genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
+# Gemini configuration is now handled by GeminiClient in app/llm/gemini_client.py
 
 import logging
 logging.basicConfig(level=logging.INFO)
@@ -35,7 +34,7 @@ class ThreatIQAgent:
     """
     
     def __init__(self):
-        self.model = genai.GenerativeModel('gemini-2.0-flash')
+        # Gemini client is now accessed via agents, not directly
         self.session_memory = {}
         
         logger.info("ThreatIQ Root Agent initialized")
@@ -45,7 +44,9 @@ class ThreatIQAgent:
         message: str,
         user_id: str,
         user_guess: str = None,
-        session_id: str = None
+        session_id: str = None,
+        request_id: str = None,
+        save_interaction: bool = True
     ) -> dict:
         """
         Run the complete multi-agent analysis workflow.
@@ -68,8 +69,10 @@ class ThreatIQAgent:
         import uuid
         if not session_id:
             session_id = str(uuid.uuid4())
+        if not request_id:
+            request_id = str(uuid.uuid4())
         
-        logger.info(f"[Session: {session_id}] Starting multi-agent analysis for user: {user_id}")
+        logger.info(f"[Session: {session_id}] [Request: {request_id}] Starting multi-agent analysis for user: {user_id}")
         
         try:
             from app.agents.classifier import classifier_agent
@@ -109,22 +112,27 @@ class ThreatIQAgent:
             if user_guess:
                 was_correct = user_guess.lower() == classification['label'].lower()
             
-            logger.info(f"[Session: {session_id}] Step 5: Updating user profile")
-            await memory_agent.update_profile(
-                user_id=user_id,
-                category=category,
-                was_correct=was_correct
-            )
-            
-            logger.info(f"[Session: {session_id}] Step 6: Logging interaction")
-            await InteractionLogger.log_interaction(
-                user_id=user_id,
-                message=message,
-                user_guess=user_guess,
-                classification=classification,
-                was_correct=was_correct,
-                session_id=session_id
-            )
+            # Only save to history if save_interaction is True
+            if save_interaction:
+                logger.info(f"[Session: {session_id}] Step 5: Updating user profile")
+                await memory_agent.update_profile(
+                    user_id=user_id,
+                    category=category,
+                    was_correct=was_correct
+                )
+                
+                logger.info(f"[Session: {session_id}] Step 6: Logging interaction")
+                await InteractionLogger.log_interaction(
+                    user_id=user_id,
+                    message=message,
+                    user_guess=user_guess,
+                    classification=classification,
+                    was_correct=was_correct,
+                    session_id=session_id,
+                    request_id=request_id
+                )
+            else:
+                logger.info(f"[Session: {session_id}] Skipping profile update and interaction logging (save_interaction=False)")
             
             self.session_memory[session_id] = {
                 "user_id": user_id,

@@ -115,35 +115,45 @@ def test_mongodb_connection():
 
 def test_gemini_api():
     """Test Gemini API connection."""
+   
     print("\n" + "=" * 60)
     print("🤖 Testing Gemini API Connection...")
     print("=" * 60)
     
     try:
-        import google.generativeai as genai
-        import os
+        import asyncio
+        from app.llm.gemini_client import get_gemini_client
+        from app.config import settings
         
-        api_key = os.getenv('GEMINI_API_KEY')
-        if not api_key:
-            print("❌ GEMINI_API_KEY not set")
+        if not settings.gemini_keys_list:
+            print("❌ No Gemini API keys configured")
+            print("   Set GEMINI_API_KEYS or GEMINI_API_KEY in .env")
             return False
         
-        genai.configure(api_key=api_key)
+        print(f"✓ Found {len(settings.gemini_keys_list)} API key(s)")
         
-        # Test with a simple prompt
-        model = genai.GenerativeModel('gemini-1.5-flash')
-        response = model.generate_content("Say 'API test successful!'")
+        # Test generation
+        client = get_gemini_client()
         
+        async def test_generation():
+            return await client.generate(
+                prompt="Say 'test successful' in one word",
+                system_instruction="You are a helpful assistant",
+                generation_config={"temperature": 0.1},
+                use_cache=False
+            )
+        
+        response = asyncio.run(test_generation())
         print("✅ Gemini API connection successful!")
-        print(f"📝 Test response: {response.text[:100]}")
+        print(f"   Response: {response[:50]}...")
         return True
         
     except Exception as e:
         print(f"❌ Gemini API connection failed: {e}")
         print("\n💡 Troubleshooting:")
         print("   - Verify your Gemini API key is correct")
-        print("   - Check you have access to gemini-1.5-flash model")
-        print("   - Ensure you haven't exceeded rate limits")
+        print("   - Check you have access to free-tier models")
+        print("   - Ensure you haven't exceeded quota limits")
         return False
 
 if __name__ == "__main__":
