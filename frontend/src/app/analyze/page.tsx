@@ -31,9 +31,10 @@ export default function AnalyzePage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [userGuess, setUserGuess] = useState<'phishing' | 'safe' | null>(null);
   const { user } = useAuth();
 
-  const handleAnalyze = async () => {
+  const handleAnalyze = async (skipGuess: boolean = false) => {
     if (!message.trim()) return;
 
     if (!user) {
@@ -49,11 +50,14 @@ export default function AnalyzePage() {
     setError(null);
     setLoading(true);
 
+    // Use the user's guess, or 'unclear' if they skipped
+    const guessToSend = skipGuess ? 'unclear' : (userGuess || 'unclear');
+
     try {
       let data;
 
       try {
-        data = await analyzeMessage(message, 'unclear', user.uid);
+        data = await analyzeMessage(message, guessToSend, user.uid);
       } catch (err: any) {
         const status = err.response?.status;
 
@@ -61,7 +65,7 @@ export default function AnalyzePage() {
         // Do NOT fallback for 500 errors - those indicate real problems
         if (status === 401 || status === 403) {
           console.warn('Auth error, falling back to public endpoint:', err);
-          data = await analyzePublicMessage(message, 'unclear', user.uid);
+          data = await analyzePublicMessage(message, guessToSend, user.uid);
         } else if (status === 429) {
           setError('Quota gratuite atteinte. Réessaie plus tard ou utilise une autre clé API.');
           return;
@@ -121,14 +125,47 @@ export default function AnalyzePage() {
                     onChange={(e) => setMessage(e.target.value)}
                   />
                 </CardContent>
-                <CardFooter>
-                  <Button
-                    className="w-full"
-                    onClick={handleAnalyze}
-                    disabled={loading || !message.trim()}
-                  >
-                    {loading ? 'Analyzing...' : 'Analyze Message'}
-                  </Button>
+                <CardFooter className="flex flex-col gap-4">
+                  <div className="w-full space-y-2">
+                    <p className="text-sm font-medium text-center">What do you think this message is?</p>
+                    <div className="flex gap-2">
+                      <Button
+                        variant={userGuess === 'phishing' ? 'default' : 'outline'}
+                        className={`flex-1 ${userGuess === 'phishing' ? 'bg-red-600 hover:bg-red-700' : ''}`}
+                        onClick={() => setUserGuess('phishing')}
+                        disabled={loading}
+                      >
+                        <AlertTriangle className="h-4 w-4 mr-2" />
+                        Phishing
+                      </Button>
+                      <Button
+                        variant={userGuess === 'safe' ? 'default' : 'outline'}
+                        className={`flex-1 ${userGuess === 'safe' ? 'bg-green-600 hover:bg-green-700' : ''}`}
+                        onClick={() => setUserGuess('safe')}
+                        disabled={loading}
+                      >
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        Safe
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="w-full flex gap-2">
+                    <Button
+                      className="flex-1"
+                      onClick={() => handleAnalyze(false)}
+                      disabled={loading || !message.trim() || !userGuess}
+                    >
+                      {loading ? 'Analyzing...' : 'Analyze with My Prediction'}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      className="text-muted-foreground"
+                      onClick={() => handleAnalyze(true)}
+                      disabled={loading || !message.trim()}
+                    >
+                      Skip
+                    </Button>
+                  </div>
                 </CardFooter>
               </Card>
 
@@ -200,6 +237,30 @@ export default function AnalyzePage() {
                           </Badge>
                         ))}
                       </div>
+
+                      {/* Prediction Feedback */}
+                      {userGuess && (
+                        <div className={`mt-4 p-3 rounded-lg flex items-center gap-2 ${userGuess === result.classification.label
+                          ? 'bg-green-500/10 border border-green-500/30'
+                          : 'bg-red-500/10 border border-red-500/30'
+                          }`}>
+                          {userGuess === result.classification.label ? (
+                            <>
+                              <CheckCircle className="h-5 w-5 text-green-500" />
+                              <span className="text-green-500 font-medium">
+                                Nice! Your prediction was correct.
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <AlertTriangle className="h-5 w-5 text-red-500" />
+                              <span className="text-red-500 font-medium">
+                                Your prediction was &quot;{userGuess}&quot; — the AI classified it as &quot;{result.classification.label}&quot;.
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
 
