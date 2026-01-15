@@ -128,7 +128,7 @@ def find_similar_phishing(message: str, category: str = None, max_results: int =
             results.append({
                 "message": row['text'][:200],  # Truncate for context
                 "category": row['category'],
-                "similarity": float(similarities[idx])
+                "description": f"Similar phishing example ({int(similarities[idx] * 100)}% match)"
             })
         
         return results

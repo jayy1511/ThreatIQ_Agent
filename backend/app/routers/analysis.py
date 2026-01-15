@@ -59,7 +59,8 @@ async def analyze_message_public(request: AnalysisRequest):
             message=request.message,
             user_id=request.user_id or "guest",
             user_guess=request.user_guess,
-            request_id=request.request_id
+            request_id=request.request_id,
+            save_interaction=False  # Public endpoint does NOT save to user history
         )
         
         return result
