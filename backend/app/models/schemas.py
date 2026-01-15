@@ -8,6 +8,7 @@ class AnalysisRequest(BaseModel):
     message: str = Field(..., min_length=1, description="Email or message to analyze")
     user_guess: Optional[str] = Field(None, description="User's prediction: phishing, safe, or unclear")
     user_id: str = Field(..., description="Firebase UID")
+    request_id: Optional[str] = Field(None, description="Optional request ID for idempotency or tracking")
 
 
 class ClassificationResult(BaseModel):

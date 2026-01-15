@@ -2,13 +2,9 @@ import logging
 import json
 from typing import Dict, List
 
-import google.generativeai as genai
-
-from app.config import settings
+from app.llm.gemini_client import get_gemini_client
 
 logger = logging.getLogger(__name__)
-
-genai.configure(api_key=settings.gemini_api_key)
 
 
 class ClassifierAgent:
@@ -44,11 +40,7 @@ Possible reason_tags:
 
 Be precise and conservative. If there is no concrete sign of phishing, use "safe".
 """
-
-        self.model = genai.GenerativeModel(
-            "gemini-2.0-flash",
-            system_instruction=self.system_instruction,
-        )
+        self.gemini_client = get_gemini_client()
 
     async def classify(self, message: str) -> Dict:
         """
@@ -66,17 +58,18 @@ MESSAGE:
 {message}
 """
 
-            response = self.model.generate_content(
-                prompt,
-                generation_config=genai.types.GenerationConfig(
-                    temperature=0.3,
-                    top_p=0.8,
-                    top_k=40,
-                    response_mime_type="application/json",
-                ),
+            response_text = await self.gemini_client.generate(
+                prompt=prompt,
+                system_instruction=self.system_instruction,
+                generation_config={
+                    "temperature": 0.3,
+                    "top_p": 0.8,
+                    "top_k": 40,
+                    "response_mime_type": "application/json",
+                },
+                use_cache=True
             )
 
-            response_text = response.text.strip()
             logger.info("Raw Gemini response: %s...", response_text[:200])
 
 

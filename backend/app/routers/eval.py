@@ -1,8 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from app.routers.auth import verify_firebase_token
 from app.models.database import Database
-from app.config import settings
-import google.generativeai as genai
+from app.llm.gemini_client import get_gemini_client
 from datetime import datetime
 import logging
 import json
@@ -11,7 +10,6 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-genai.configure(api_key=settings.gemini_api_key)
 
 EVAL_SYSTEM_INSTRUCTION = """
 You are an evaluation agent for a phishing detection system.
@@ -90,17 +88,23 @@ async def evaluate_sample(
             + "\n\nHere is the list of interactions to evaluate:\n\n"
         )
         prompt += json.dumps(interactions, ensure_ascii=False, indent=2)
+        
+        try:
+            gemini_client = get_gemini_client()
+            raw_text = await gemini_client.generate(
+                prompt=prompt,
+                system_instruction=EVAL_SYSTEM_INSTRUCTION,
+                generation_config={
+                    "temperature": 0.2,
+                    "top_p": 0.9,
+                },
+                use_cache=False
+            )
+            raw_text = raw_text.strip()
+        except Exception as e:
+            logger.error(f"Error generating evaluation content: {e}", exc_info=True)
+            raise HTTPException(status_code=500, detail="Failed to generate evaluation content from LLM.")
 
-        model = genai.GenerativeModel("gemini-2.0-flash")
-        response = model.generate_content(
-            prompt,
-            generation_config=genai.types.GenerationConfig(
-                temperature=0.1,
-                response_mime_type="application/json",
-            ),
-        )
-
-        raw_text = (response.text or "").strip()
         logger.info("Evaluation raw response: %s", raw_text[:300])
 
         try:

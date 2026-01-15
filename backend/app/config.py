@@ -5,7 +5,10 @@ from typing import List
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
     
-    gemini_api_key: str
+    # Gemini API configuration
+    # Prefer GEMINI_API_KEYS for multiple keys, fallback to GEMINI_API_KEY
+    gemini_api_key: str = ""
+    gemini_api_keys: str = ""
     
     mongodb_uri: str
     mongodb_db_name: str = "threatiq"
@@ -30,6 +33,15 @@ class Settings(BaseSettings):
     def cors_origins_list(self) -> List[str]:
         """Parse CORS origins as a list."""
         return [origin.strip() for origin in self.cors_origins.split(",")]
+    
+    @property
+    def gemini_keys_list(self) -> List[str]:
+        """Parse Gemini API keys as a list."""
+        if self.gemini_api_keys:
+            return [k.strip() for k in self.gemini_api_keys.split(",") if k.strip()]
+        if self.gemini_api_key:
+            return [self.gemini_api_key]
+        return []
     
     class Config:
         env_file = ".env"

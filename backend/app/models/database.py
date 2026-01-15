@@ -40,8 +40,14 @@ class Database:
         """Create database indexes for performance."""
         try:
             await cls.db.user_profiles.create_index("user_id", unique=True)
-            
+            # Interactions collection indexes
             await cls.db.interactions.create_index([("user_id", 1), ("timestamp", -1)])
+            # Unique index on (user_id, request_id) for idempotency
+            await cls.db.interactions.create_index(
+                [("user_id", 1), ("request_id", 1)], 
+                unique=True,
+                name="unique_user_request"
+            )
             
             await cls.db.users.create_index("firebase_uid", unique=True)
             

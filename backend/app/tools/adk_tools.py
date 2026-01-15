@@ -230,9 +230,9 @@ async def update_user_profile(user_id: str, category: str, was_correct: Optional
         return profile
 
 
-async def log_interaction(user_id: str, message: str, classification: Dict, was_correct: Optional[bool], session_id: str) -> bool:
+async def log_interaction(user_id: str, message: str, classification: Dict, was_correct: Optional[bool], session_id: str, request_id: str) -> bool:
     """
-    Log an interaction to MongoDB.
+    Log an interaction to MongoDB with idempotency support.
     
     Args:
         user_id: Firebase UID
@@ -240,6 +240,7 @@ async def log_interaction(user_id: str, message: str, classification: Dict, was_
         classification: Classification result
         was_correct: Whether user was correct
         session_id: Session ID
+        request_id: Unique request ID for idempotency
         
     Returns:
         True if successful
@@ -247,16 +248,28 @@ async def log_interaction(user_id: str, message: str, classification: Dict, was_
     try:
         db = Database.get_db()
         
+        # Check if interaction with this request_id already exists (idempotency)
+        existing = await db.interactions.find_one({
+            "user_id": user_id,
+            "request_id": request_id
+        })
+        
+        if existing:
+            logger.info(f"Interaction with request_id {request_id} already logged, skipping duplicate")
+            return True
+        
         interaction = {
             "user_id": user_id,
             "message": message,
             "classification": classification,
             "was_correct": was_correct,
             "timestamp": datetime.utcnow(),
-            "session_id": session_id
+            "session_id": session_id,
+            "request_id": request_id
         }
         
         await db.interactions.insert_one(interaction)
+        logger.info(f"Logged interaction with request_id: {request_id}")
         return True
         
     except Exception as e:
