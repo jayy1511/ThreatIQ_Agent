@@ -1,6 +1,6 @@
 # ThreatIQ - Multi-Agent Phishing Detection System
 
-An intelligent phishing detection and security training platform leveraging Google's Agent Development Kit (ADK) and modern web technologies. Features automated Gmail inbox triage with AI-powered threat classification.
+An intelligent phishing detection and security training platform leveraging Google's Gemini AI and modern web technologies. Features multi-agent analysis, automated Gmail inbox triage, daily cybersecurity micro-lessons, and gamified learning with XP, levels, and streaks.
 
 ## Table of Contents
 
@@ -10,6 +10,7 @@ An intelligent phishing detection and security training platform leveraging Goog
 - [Project Structure](#project-structure)
 - [Setup Instructions](#setup-instructions)
 - [Gmail Integration](#gmail-integration)
+- [Daily Lessons System](#daily-lessons-system)
 - [API Documentation](#api-documentation)
 - [Deployment](#deployment)
 - [Security](#security)
@@ -17,31 +18,112 @@ An intelligent phishing detection and security training platform leveraging Goog
 
 ## Overview
 
-ThreatIQ is a production-ready multi-agent AI system that combines real-time phishing detection with personalized security coaching. The platform analyzes suspicious messages, provides detailed classification results, and generates adaptive educational content based on user performance patterns.
+ThreatIQ is a production-ready full-stack web application that combines real-time phishing detection with personalized security coaching and gamified learning. The platform uses a multi-agent AI architecture to analyze suspicious messages, provides detailed classification results, generates adaptive educational content, and maintains long-term user engagement through daily lessons and gamification.
 
 ### Core Capabilities
 
-1. **Intelligent Detection**: Multi-agent system analyzes messages using natural language processing and pattern matching to identify phishing indicators with confidence scores and detailed explanations.
+1. **Multi-Agent Phishing Detection**: Four specialized AI agents work together to classify messages:
+   - **Classifier Agent**: Analyzes messages using Gemini AI to identify phishing indicators with confidence scores and reason tags
+   - **Evidence Agent**: Uses TF-IDF similarity search to find related real-world examples from a curated phishing dataset
+   - **Memory Agent**: Manages user profiles and learning context to enable personalization
+   - **Coach Agent**: Generates explanations, personalized tips, and interactive quizzes based on analysis results
 
-2. **Gmail Integration**: Connect your Gmail account to automatically triage unread emails using ThreatIQ's AI classification. Apply labels (Safe/Suspicious/Phishing) and optionally mark spam or archive emails.
+2. **Gmail Integration**: Automated inbox protection using OAuth 2.0:
+   - Connect your Gmail account securely with server-side token exchange
+   - Automatically triage up to 50 unread emails using ThreatIQ's AI classification
+   - Apply labels (ThreatIQ/Safe, ThreatIQ/Suspicious, ThreatIQ/Phishing) directly in Gmail
+   - Optional automatic spam marking and archiving
+   - View triage history with confidence scores and classifications
 
-3. **Personalized Learning**: Tracks individual user performance, identifies weak spots in security awareness, and adapts coaching strategies based on historical interaction data.
+3. **Daily Micro-Lessons**: Gamified learning for long-term security awareness:
+   - 12 curated cybersecurity lessons covering passwords, 2FA, phishing, social engineering, mobile security, and more
+   - Rotating daily lessons (2-3 minutes each) tied to the Europe/Paris timezone
+   - Interactive quizzes (3 multiple-choice questions per lesson)
+   - XP rewards based on quiz performance (10-50 XP per lesson)
+   - Progression system with levels calculated from total XP
+   - Streak tracking to encourage daily engagement (current streak, best streak)
+   - Visual progress dashboard showing last 7 days of activity
 
-4. **Evidence-Based Training**: Retrieves similar real-world phishing examples from a curated dataset to provide concrete, relatable training material.
+4. **Personalized Learning**: Adaptive coaching based on user performance:
+   - Tracks individual performance across different phishing categories
+   - Identifies weak spots in security awareness
+   - Provides category-specific statistics and improvement trends
+   - Maintains comprehensive interaction history with correctness indicators
 
-5. **Progress Tracking**: Maintains comprehensive user profiles with performance metrics, category-specific statistics, and learning trajectory visualization.
+5. **Evidence-Based Training**: Real-world context for better learning:
+   - Retrieves similar phishing examples from a curated dataset
+   - Provides concrete, relatable training material
+   - Shows actual reason tags and patterns from real threats
 
 ## Features
 
 ### For End Users
 
-- **Real-Time Analysis**: Submit suspicious emails, SMS, or social media messages for instant AI-powered analysis
-- **Gmail Inbox Triage**: Connect Gmail and automatically classify unread emails with AI-powered threat detection
-- **Detailed Results**: Receive comprehensive reports including threat classification, confidence scores, reason tags, and detailed explanations
-- **Learning Dashboard**: Track progress with visual charts showing accuracy rates, category performance, and improvement trends
-- **Personalized Coaching**: Get adaptive tips and explanations based on individual weak spots and learning history
-- **Interactive Quizzes**: Test knowledge with contextually generated questions related to analyzed threats
-- **History Review**: Access complete analysis history with timestamps and correctness indicators
+#### Phishing Analysis
+- **Real-Time Analysis**: Submit suspicious emails, SMS, or social media messages for instant AI-powered multi-agent analysis
+- **Detailed Results**: Comprehensive reports including:
+  - Threat classification (Safe/Suspicious/Phishing)
+  - Confidence scores (0-100%)
+  - Reason tags identifying specific indicators
+  - Detailed explanations of why the message was classified as such
+- **Interactive Quizzes**: Test your knowledge with contextually generated questions based on the analyzed threat
+- **Evidence-Based Learning**: View similar real-world phishing examples from the dataset to understand patterns
+
+#### Gmail Inbox Protection
+- **OAuth 2.0 Authentication**: Secure server-side token exchange with Google (frontend never sees tokens)
+- **Automatic Label Creation**: Creates and manages ThreatIQ/Safe, ThreatIQ/Suspicious, and ThreatIQ/Phishing labels
+- **Batch Processing**: Process up to 50 unread emails per triage session
+- **Optional Actions**: Automatically mark phishing emails as spam or archive safe emails
+- **Triage History**: View past classifications with timestamps, confidence scores, and reasoning
+- **Token Security**: Gmail access tokens encrypted at rest using Fernet AES-128
+- **Auto Token Refresh**: Seamless OAuth token renewal without user interaction
+
+#### Daily Micro-Lessons
+- **Curated Content**: 12 professionally written cybersecurity lessons covering:
+  - **Passwords**: Creating strong passwords, using password managers
+  - **Authentication**: Two-factor authentication (2FA) best practices
+  - **Phishing**: Spotting phishing links and email attachments
+  - **Social Engineering**: Recognizing manipulation tactics
+  - **Device Security**: Mobile security, public WiFi safety, software updates
+  - **Privacy**: Social media privacy settings, safe online shopping
+  - **Data Protection**: Backup strategies and best practices
+- **Daily Rotation**: New lesson each day based on Europe/Paris timezone
+- **Interactive Quizzes**: 3 multiple-choice questions per lesson with explanations
+- **Instant Feedback**: Scores calculated immediately with detailed answer explanations
+- **2-3 Minute Format**: Short, digestible content designed for daily engagement
+
+#### Gamification & Progress Tracking
+- **XP System**: Earn 10-50 XP per lesson based on quiz performance:
+  - Perfect score (100%): 50 XP
+  - Good score (67-99%): 30 XP
+  - Passing score (34-66%): 20 XP
+  - Low score (1-33%): 10 XP
+  - Failed (0%): 5 XP (participation reward)
+- **Level Progression**: Dynamic level calculation based on total XP earned
+- **Streak Tracking**: 
+  - Current streak: consecutive days with completed lessons
+  - Best streak: personal record streak
+  - Streak resets if a day is missed
+  - Visual streak indicators on the dashboard
+- **7-Day Activity Calendar**: Visual representation of lesson completion over the past week
+- **Learning Dashboard**: Comprehensive metrics including:
+  - Total analyses performed
+  - Overall accuracy rate
+  - Category-specific performance
+  - Weak spot identification
+  - Improvement trends with charts (Recharts)
+  - XP and level display
+  - Streak information
+
+#### History & Profile Management
+- **Analysis History**: Access complete history of all analyzed messages with:
+  - Original message content
+  - Classification and confidence
+  - User guess (if provided)
+  - Correctness indicators
+  - Timestamps
+  - Session tracking
+- **User Profile**: View personalized statistics and performance metrics
 - **Theme Support**: Choose between light and dark modes for comfortable viewing
 
 ### Gmail Integration Features
