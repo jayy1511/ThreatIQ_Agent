@@ -10,8 +10,10 @@ import {
 } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/context/AuthContext';
-import { getUserSummary, getUserProfile } from '@/lib/api';
+import { getUserSummary, getUserProfile, getLessonProgress, getTodayLesson } from '@/lib/api';
 import {
   BarChart,
   Bar,
@@ -24,15 +26,34 @@ import {
   Pie,
   Cell,
 } from 'recharts';
-import { Shield, Target, TrendingUp, AlertTriangle, CheckCircle2, XCircle } from 'lucide-react';
+import { Shield, Target, TrendingUp, AlertTriangle, CheckCircle2, XCircle, Flame, BookOpen, Trophy, Sparkles } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import GmailIntegration from '@/components/GmailIntegration';
+
+interface LessonProgress {
+  xp_total: number;
+  level: number;
+  streak_current: number;
+  streak_best: number;
+  last_lesson_completed_date: string | null;
+  last_7_days: Array<{ date: string; day_name: string; completed: boolean }>;
+  lessons_completed: number;
+}
+
+interface TodayLessonData {
+  lesson: { lesson_id: string; title: string; topic: string };
+  date: string;
+  already_completed: boolean;
+}
 
 export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth();
   const [summary, setSummary] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
+  const [lessonProgress, setLessonProgress] = useState<LessonProgress | null>(null);
+  const [todayLesson, setTodayLesson] = useState<TodayLessonData | null>(null);
   const [loading, setLoading] = useState(true);
   const [gmailToast, setGmailToast] = useState<'connected' | 'error' | null>(null);
   const router = useRouter();
@@ -53,12 +74,16 @@ export default function DashboardPage() {
     if (user) {
       const fetchData = async () => {
         try {
-          const [summaryData, profileData] = await Promise.all([
+          const [summaryData, profileData, progressData, lessonData] = await Promise.all([
             getUserSummary(user.uid),
             getUserProfile(user.uid),
+            getLessonProgress().catch(() => null),
+            getTodayLesson().catch(() => null),
           ]);
           setSummary(summaryData);
           setProfile(profileData);
+          setLessonProgress(progressData);
+          setTodayLesson(lessonData);
         } catch (error) {
           console.error('Error fetching dashboard data:', error);
         } finally {
@@ -128,6 +153,118 @@ export default function DashboardPage() {
             )}
           </div>
         )}
+
+        {/* Daily Lesson & Streak Section */}
+        <div className="grid gap-4 md:grid-cols-2 mb-8">
+          {/* Daily Lesson Card */}
+          <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <BookOpen className="h-5 w-5 text-primary" />
+                  Daily Lesson
+                </CardTitle>
+                {todayLesson?.already_completed && (
+                  <CheckCircle2 className="h-5 w-5 text-green-500" />
+                )}
+              </div>
+              {todayLesson && (
+                <CardDescription className="text-base font-medium">
+                  {todayLesson.lesson.title}
+                </CardDescription>
+              )}
+            </CardHeader>
+            <CardContent>
+              {todayLesson ? (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">
+                      {todayLesson.lesson.topic}
+                    </span>
+                    <span className="text-sm text-muted-foreground">~3 min</span>
+                  </div>
+                  <Link href="/lessons/today">
+                    <Button className="w-full" size="lg">
+                      {todayLesson.already_completed ? "Review Lesson" : "Start Lesson"}
+                    </Button>
+                  </Link>
+                </div>
+              ) : (
+                <p className="text-muted-foreground">Loading...</p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Streak & XP Card */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2">
+                <Flame className="h-5 w-5 text-orange-500" />
+                Progress
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {lessonProgress ? (
+                <div className="space-y-4">
+                  {/* Streak and XP */}
+                  <div className="grid grid-cols-3 gap-4 text-center">
+                    <div>
+                      <div className="text-2xl font-bold text-orange-500">
+                        {lessonProgress.streak_current}
+                      </div>
+                      <p className="text-xs text-muted-foreground">Day Streak</p>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-purple-500">
+                        {lessonProgress.xp_total}
+                      </div>
+                      <p className="text-xs text-muted-foreground">Total XP</p>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-blue-500">
+                        Nv. {lessonProgress.level}
+                      </div>
+                      <p className="text-xs text-muted-foreground">Level</p>
+                    </div>
+                  </div>
+
+                  {/* 7-day streak visualization */}
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-2">Last 7 days</p>
+                    <div className="flex justify-between gap-1">
+                      {lessonProgress.last_7_days.map((day, idx) => (
+                        <div key={idx} className="flex flex-col items-center">
+                          <div
+                            className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${day.completed
+                              ? 'bg-green-500 text-white'
+                              : 'bg-muted text-muted-foreground'
+                              }`}
+                          >
+                            {day.completed ? '✓' : day.day_name.charAt(0)}
+                          </div>
+                          <span className="text-xs text-muted-foreground mt-1">
+                            {day.day_name}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Best streak */}
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Best Streak</span>
+                    <span className="font-medium flex items-center gap-1">
+                      <Trophy className="h-4 w-4 text-yellow-500" />
+                      {lessonProgress.streak_best} days
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-muted-foreground">No progress yet</p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Gmail Integration Section */}
         <div className="mb-8">
