@@ -7,7 +7,7 @@ from agent import root_agent
 import logging
 from app.routers import metrics
 from app.routers import eval as eval_router
-from app.routers import analysis, profile, auth, gmail
+from app.routers import analysis, profile, auth, gmail, lessons
 
 logging.basicConfig(
     level=logging.INFO,
@@ -107,6 +107,7 @@ app.include_router(analysis.router, prefix="/api", tags=["Analysis"])
 app.include_router(profile.router, prefix="/api", tags=["Profile"])
 app.include_router(auth.router, prefix="/api", tags=["Auth"])
 app.include_router(gmail.router, prefix="/api", tags=["Gmail"])
+app.include_router(lessons.router, prefix="/api", tags=["Lessons"])
 app.include_router(metrics.router, prefix="/api")
 app.include_router(eval_router.router, prefix="/api")
 

@@ -108,5 +108,25 @@ export const getGmailHistory = async (limit: number = 50) => {
   return response.data;
 };
 
+// ============== LESSON APIs ==============
+
+export const getTodayLesson = async () => {
+  const response = await api.get("/api/lessons/today");
+  return response.data;
+};
+
+export const completeLesson = async (lessonId: string, answers: number[]) => {
+  const response = await api.post("/api/lessons/complete", {
+    lesson_id: lessonId,
+    answers,
+  });
+  return response.data;
+};
+
+export const getLessonProgress = async () => {
+  const response = await api.get("/api/lessons/progress");
+  return response.data;
+};
+
 export default api;
 

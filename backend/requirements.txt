@@ -30,3 +30,6 @@ google-auth==2.37.0
 google-auth-oauthlib==1.2.1
 google-auth-httplib2==0.2.0
 cryptography==44.0.0
+
+# Timezone support
+pytz==2024.1
