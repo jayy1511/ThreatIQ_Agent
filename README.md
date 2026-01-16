@@ -126,55 +126,65 @@ ThreatIQ is a production-ready full-stack web application that combines real-tim
 - **User Profile**: View personalized statistics and performance metrics
 - **Theme Support**: Choose between light and dark modes for comfortable viewing
 
-### Gmail Integration Features
-
-- **OAuth 2.0 Authentication**: Secure server-side token exchange with Google
-- **Automatic Label Creation**: Creates ThreatIQ/Safe, ThreatIQ/Suspicious, and ThreatIQ/Phishing labels
-- **Batch Processing**: Process up to 50 unread emails per triage session
-- **Optional Actions**: Mark phishing emails as spam or archive safe emails automatically
-- **Triage History**: View past classifications with confidence scores and reasons
-- **Token Encryption**: Gmail access tokens encrypted at rest using Fernet AES-128
-- **Auto Token Refresh**: Seamless OAuth token renewal without user interaction
-
 ## Technology Stack
 
 ### Backend
 
-| Component | Technology | Purpose |
-|-----------|-----------|---------|
-| Framework | FastAPI 0.118.3 | High-performance async API server |
-| Agent System | Google ADK (genai-agents) | Multi-agent orchestration and LLM integration |
-| Language Model | Gemini 2.0 Flash | Natural language understanding and generation |
-| Database | MongoDB Atlas (Motor 3.6.0) | User profiles and interaction history |
-| Authentication | Firebase Admin SDK | Token verification and user management |
-| Gmail Integration | Google API Python Client 2.155.0 | Gmail API access and OAuth 2.0 |
-| Encryption | Cryptography 44.0.0 | Fernet symmetric encryption for tokens |
-| ML Tools | scikit-learn 1.4.0 | TF-IDF vectorization and similarity search |
-| Validation | Pydantic 2.5.3 | Request/response schema validation |
+| Component | Technology | Version | Purpose |
+|-----------|------------|---------|----------|
+| Framework | FastAPI | 0.118.3 | High-performance async API server with OpenAPI docs |
+| Server | Uvicorn | 0.38.0 | ASGI server with standards support |
+| Language Model | Google Gemini API | 0.8.5 | Natural language understanding for Classifier & Coach agents |
+| Database | MongoDB | Motor 3.7.1, pymongo 4.15.4 | Async NoSQL database for all collections |
+| Authentication | Firebase Admin SDK | 7.1.0 | Token verification and user management |
+| Gmail Integration | Google API Client | 2.155.0 | Gmail API access and OAuth 2.0 |
+| OAuth & Auth | google-auth packages | 2.37.0, 1.2.1 | OAuth 2.0 authentication flow |
+| Encryption | Cryptography | 44.0.0 | Fernet AES-128 for token encryption |
+| ML Tools | scikit-learn | 1.7.2 | TF-IDF vectorization and cosine similarity |
+| Data Processing | pandas, numpy | 2.3.3, 2.3.5 | Dataset analysis and manipulation |
+| Validation | Pydantic | 2.12.4 | Schema validation and settings |
+| Configuration | python-dotenv | 1.0.1 | Environment variable management |
+| Timezone | pytz | 2024.1 | Paris timezone for daily lessons |
+| HTTP Client | httpx | 0.28.1 | Async HTTP requests |
 
 ### Frontend
 
-| Component | Technology | Purpose |
-|-----------|-----------|---------|
-| Framework | Next.js 14 (App Router) | Server-side rendering and routing |
-| Language | TypeScript | Type safety and developer experience |
-| UI Components | ShadCN UI | Accessible, customizable component library |
-| Styling | TailwindCSS | Utility-first CSS framework |
-| Authentication | Firebase SDK | Client-side auth and token management |
-| Charts | Recharts | Data visualization for dashboards |
-| HTTP Client | Axios | API request handling with interceptors |
-| Theme | next-themes | Dark/light mode with system preference detection |
+| Component | Technology | Version | Purpose |
+|-----------|------------|---------|----------|
+| Framework | Next.js (App Router) | 14.2.33 | SSR, routing, and optimizations |
+| Language | TypeScript | ^5 | Type safety and DX |
+| Runtime | React | ^18 | UI components and state |
+| UI Components | Radix UI (ShadCN) | Various | Accessible component primitives |
+| Styling | TailwindCSS | ^3.4.1 | Utility-first CSS |
+| Animations | tailwindcss-animate | ^1.0.7 | Pre-built animations |
+| Authentication | Firebase SDK | ^12.6.0 | Client-side auth |
+| Charts | Recharts | ^3.4.1 | Data visualization |
+| HTTP Client | Axios | ^1.13.2 | API requests with interceptors |
+| Date Handling | date-fns | ^4.1.0 | Date formatting |
+| Theme | next-themes | ^0.4.6 | Dark/light mode |
+| Icons | lucide-react | ^0.554.0 | Icon library |
+| Utilities | clsx, tailwind-merge | Various | className utilities |
 
-### Infrastructure
+### Infrastructure & Services
 
 | Service | Usage | Tier |
 |---------|-------|------|
-| MongoDB Atlas | Database hosting | Free M0 (512MB) |
-| Firebase | Authentication service | Free Spark plan |
-| Google AI Studio | Gemini API access | Free tier (15 RPM) |
-| Google Cloud | Gmail API and OAuth | Free tier |
+| MongoDB Atlas | Database (profiles, interactions, tokens, lessons, triage) | Free M0 (512MB) |
+| Firebase | Authentication (email/password, Google Sign-In) | Free Spark plan |
+| Google AI Studio | Gemini API (Classifier & Coach agents) | Free tier (15 RPM) |
+| Google Cloud | Gmail API and OAuth 2.0 | Free tier |
 | Vercel | Frontend hosting | Free hobby plan |
 | Render | Backend hosting | Free tier |
+
+### Multi-Agent Architecture
+
+Custom multi-agent system (not using Google ADK):
+
+1. **Root Orchestrator** (`agent.py`): Coordinates sequential workflow of specialized agents
+2. **Classifier Agent** (`app/agents/classifier.py`): Gemini-powered message analysis with structured JSON output
+3. **Evidence Agent** (`app/agents/evidence.py`): TF-IDF similarity search against phishing dataset
+4. **Memory Agent** (`app/agents/memory.py`): MongoDB-based profile and learning context management
+5. **Coach Agent** (`app/agents/coach.py`): Gemini-powered explanations, tips, and quiz generation
 
 ## Project Structure
 
@@ -184,61 +194,77 @@ ThreatIQ_Agent/
 │   ├── agent.py                    # Root orchestrator agent
 │   ├── app/
 │   │   ├── main.py                # FastAPI application entry
-│   │   ├── config.py              # Environment configuration
+│   │   ├── config.py              # Environment configuration (Pydantic settings)
 │   │   ├── agents/                # Specialized AI agents
-│   │   │   ├── classifier.py      # Phishing classification
-│   │   │   ├── evidence.py        # Similarity search
-│   │   │   ├── memory.py          # Profile management
-│   │   │   └── coach.py           # Educational coaching
+│   │   │   ├── classifier.py      # Phishing classification (Gemini)
+│   │   │   ├── evidence.py        # TF-IDF similarity search
+│   │   │   ├── memory.py          # Profile & context management
+│   │   │   └── coach.py           # Educational coaching (Gemini)
 │   │   ├── models/                # Data models and schemas
-│   │   │   ├── database.py        # MongoDB connection
-│   │   │   └── schemas.py         # Pydantic models
+│   │   │   ├── database.py        # MongoDB connection manager
+│   │   │   └── schemas.py         # Pydantic request/response models
 │   │   ├── routers/               # API endpoints
-│   │   │   ├── analysis.py        # Message analysis routes
+│   │   │   ├── analysis.py        # Message analysis (public & protected)
 │   │   │   ├── profile.py         # User profile and history
-│   │   │   ├── auth.py            # Token verification
-│   │   │   ├── gmail.py           # Gmail integration endpoints
-│   │   │   ├── metrics.py         # System metrics
-│   │   │   └── eval.py            # Model evaluation
+│   │   │   ├── auth.py            # Firebase token verification
+│   │   │   ├── gmail.py           # Gmail OAuth & triage endpoints
+│   │   │   ├── lessons.py         # Daily lessons & gamification
+│   │   │   ├── metrics.py         # System-wide metrics
+│   │   │   └── eval.py            # Model evaluation tools
 │   │   ├── services/              # Business logic services
-│   │   │   ├── crypto.py          # Token encryption
-│   │   │   ├── gmail_oauth.py     # OAuth 2.0 flow
+│   │   │   ├── crypto.py          # Fernet token encryption
+│   │   │   ├── gmail_oauth.py     # OAuth 2.0 flow management
 │   │   │   ├── gmail_client.py    # Gmail API wrapper
-│   │   │   └── gmail_triage.py    # Triage orchestration
-│   │   └── tools/                 # Custom ADK tools
-│   │       ├── adk_tools.py       # Core tool implementations
-│   │       ├── dataset_tools.py   # Dataset management
-│   │       └── profile_tools.py   # Profile utilities
-│   ├── data/                      # Phishing dataset (CSV)
+│   │   │   └── gmail_triage.py    # Inbox triage orchestration
+│   │   ├── tools/                 # Utility modules
+│   │   │   ├── adk_tools.py       # Core analysis tools
+│   │   │   ├── dataset_tools.py   # Phishing dataset loader
+│   │   │   └── profile_tools.py   # Interaction logger
+│   │   ├── data/                  # Data and content
+│   │   │   ├── lessons.py         # 12 cybersecurity micro-lessons
+│   │   │   └── (dataset CSV)      # Phishing examples dataset
+│   │   └── llm/                   # LLM client
+│   │       └── gemini_client.py   # Gemini API with rate limiting
 │   ├── requirements.txt           # Python dependencies
+│   ├── validate_env.py            # Environment validation script
+│   ├── fix_duplicates.py          # Database maintenance utility
+│   ├── test_backend.py            # Backend tests
 │   └── README.md                  # Backend documentation
 ├── frontend/
 │   ├── src/
 │   │   ├── app/                   # Next.js app router pages
 │   │   │   ├── page.tsx          # Landing page
+│   │   │   ├── layout.tsx        # Root layout with theme
+│   │   │   ├── globals.css       # Global styles
 │   │   │   ├── login/            # Login page
 │   │   │   ├── signup/           # Signup page
 │   │   │   ├── analyze/          # Analysis interface
-│   │   │   ├── dashboard/        # User dashboard with Gmail integration
-│   │   │   ├── history/          # Analysis history
-│   │   │   ├── profile/          # User profile
-│   │   │   └── layout.tsx        # Root layout
+│   │   │   ├── dashboard/        # Dashboard with Gmail & lessons
+│   │   │   ├── history/          # Analysis history viewer
+│   │   │   ├── profile/          # User profile page
+│   │   │   └── lessons/          # Daily lessons page
+│   │   │       └── today/        # Today's lesson viewer
 │   │   ├── components/            # Reusable components
 │   │   │   ├── Navbar.tsx        # Navigation header
 │   │   │   ├── GmailIntegration.tsx # Gmail triage component
-│   │   │   ├── ProtectedRoute.tsx# Auth guard
-│   │   │   ├── theme-provider.tsx# Theme context
-│   │   │   └── ui/               # ShadCN components
+│   │   │   ├── ProtectedRoute.tsx# Auth guard wrapper
+│   │   │   ├── theme-provider.tsx# Theme context provider
+│   │   │   ├── mode-toggle.tsx   # Dark/light mode toggle
+│   │   │   └── ui/               # ShadCN UI primitives
 │   │   ├── context/               # React contexts
-│   │   │   └── AuthContext.tsx   # Authentication state
+│   │   │   └── AuthContext.tsx   # Firebase auth state
 │   │   ├── types/                 # TypeScript definitions
 │   │   │   └── gmail.ts          # Gmail API types
 │   │   └── lib/                   # Utilities
-│   │       ├── firebase.ts       # Firebase configuration
-│   │       └── api.ts            # API client with Gmail endpoints
+│   │       ├── firebase.ts       # Firebase SDK config
+│   │       ├── api.ts            # Axios client with auth
+│   │       └── utils.ts          # Helper functions
 │   ├── public/                    # Static assets
 │   ├── package.json              # Node dependencies
+│   ├── tailwind.config.ts        # Tailwind configuration
+│   ├── tsconfig.json             # TypeScript config
 │   └── README.md                  # Frontend documentation
+├── Writeup.md                     # Project writeup and documentation
 └── README.md                      # This file
 ```
 
@@ -392,6 +418,119 @@ ThreatIQ_Agent/
 - CORS restricted to specific origins
 - Scoped permissions (minimal required access)
 
+## Daily Lessons System
+
+ThreatIQ includes a gamified daily learning system to maintain long-term user engagement and continuously improve security awareness.
+
+### Features
+
+#### Content Library
+- **12 Curated Lessons**: Professionally written cybersecurity hygiene topics
+- **Topics Covered**:
+  - `passwords-101`: Creating Strong Passwords
+  - `2fa-basics`: Two-Factor Authentication Explained
+  - `phishing-links`: Spotting Phishing Links
+  - `email-attachments`: Safe Handling of Email Attachments
+  - `software-updates`: Why Software Updates Matter
+  - `public-wifi`: Staying Safe on Public WiFi
+  - `social-engineering`: Recognizing Social Engineering
+  - `password-managers`: Using Password Managers
+  - `backup-basics`: Backing Up Your Data
+  - `mobile-security`: Securing Your Smartphone
+  - `privacy-settings`: Social Media Privacy
+  - `secure-shopping`: Safe Online Shopping
+
+#### Daily Rotation
+- Lesson of the day determined by current date (Europe/Paris timezone)
+- Algorithm: `date_int % 12` ensures each lesson appears regularly
+- Users can complete the same lesson only once per day
+- Already-completed lessons give 0 XP but still show results
+
+#### Quiz System
+- **3 Multiple-Choice Questions** per lesson
+- Immediate feedback with detailed explanations
+- Score calculation: `(correct_answers / total_questions) * 100`
+- Correct answers highlighted in results
+
+#### Gamification
+
+**XP (Experience Points)**:
+- Perfect Score (100%): 50 XP
+- Good Score (67-99%): 30 XP  
+- Passing (34-66%): 20 XP
+- Low Score (1-33%): 10 XP
+- Participation (0%): 5 XP
+
+**Levels**:
+- Calculated dynamically: `floor(sqrt(total_xp / 100))`
+- No level cap - scales infinitely
+- Example: 400 XP = Level 2, 900 XP = Level 3
+
+**Streaks**:
+- **Current Streak**: Consecutive days with completed lessons
+- **Best Streak**: Personal record (never resets)
+- Streak logic (Paris timezone):
+  - Increments if completed today
+  - Continues if completed yesterday
+  - Resets to 0 if gap > 1 day
+- Visual streak indicators in UI
+
+**Progress Tracking**:
+- Last 7 days activity calendar
+- Total lessons completed count
+- XP and level displayed prominently
+- Lesson completion history
+
+### MongoDB Collections
+
+The system uses dedicated collections:
+
+```javascript
+// lesson_progress collection
+{
+  user_id: "firebase_uid",
+  xp_total: 180,
+  lessons_completed: [
+    {
+      lesson_id: "passwords-101",
+      completed_date: "2026-01-15",  // Paris timezone
+      score_percent: 100,
+      xp_earned: 50
+    }
+  ],
+  streak_current: 5,
+  streak_best: 12,
+  last_lesson_date: "2026-01-16",
+  updated_at: ISODate("2026-01-16T22:30:00Z")
+}
+```
+
+### Usage Flow
+
+1. **Access Lessons Page**: Navigate to `/lessons/today`
+2. **View Today's Lesson**: Read 2-3 minutes of content
+3. **Take Quiz**: Answer 3 multiple-choice questions
+4. **Get Results**: See score, correct answers, XP earned
+5. **Track Progress**: View updated XP, level, streak on dashboard
+6. **Return Tomorrow**: New lesson available every 24 hours (Paris time)
+
+### API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/lessons/today` | Get today's lesson with completion status |
+| POST | `/api/lessons/complete` | Submit quiz answers and earn XP |
+| GET | `/api/lessons/progress` | Get user's XP, level, streaks, and 7-day activity |
+| GET | `/api/lessons/list` | Get metadata for all available lessons |
+
+### Design Philosophy
+
+- **Micro-learning**: Short, digestible content (2-3 minutes)
+- **Daily Habit**: Encourages daily logins and engagement
+- **Positive Reinforcement**: Always reward participation (minimum 5 XP)
+- **Progressive Difficulty**: No penalty for wrong answers, focus on learning
+- **Long-term Engagement**: Streaks and levels create habit formation
+
 ## API Documentation
 
 ### Interactive Documentation
@@ -405,8 +544,8 @@ ThreatIQ_Agent/
 
 | Method | Endpoint | Description | Auth Required |
 |--------|----------|-------------|---------------|
-| POST | `/api/analyze-public` | Public analysis | No |
-| POST | `/api/analyze` | Full analysis with profile tracking | Yes |
+| POST | `/api/analyze-public` | Public analysis (no profile tracking) | No |
+| POST | `/api/analyze` | Full analysis with profile tracking and history | Yes |
 
 #### Gmail Integration
 
@@ -416,8 +555,17 @@ ThreatIQ_Agent/
 | GET | `/api/gmail/callback` | OAuth callback (state validated) | No |
 | GET | `/api/gmail/status` | Check Gmail connection status | Yes |
 | POST | `/api/gmail/disconnect` | Revoke tokens and disconnect | Yes |
-| POST | `/api/gmail/triage` | Run inbox triage | Yes |
+| POST | `/api/gmail/triage` | Run inbox triage (batch classification) | Yes |
 | GET | `/api/gmail/history` | Get triage history | Yes |
+
+#### Daily Lessons
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| GET | `/api/lessons/today` | Get today's lesson with completion status | Yes |
+| POST | `/api/lessons/complete` | Submit quiz answers and earn XP | Yes |
+| GET | `/api/lessons/progress` | Get user's XP, level, streaks, 7-day activity | Yes |
+| GET | `/api/lessons/list` | Get metadata for all 12 lessons | Yes |
 
 #### User Profile
 
@@ -434,7 +582,7 @@ ThreatIQ_Agent/
 | GET | `/` | API information and version | No |
 | GET | `/health` | Health check status | No |
 | GET | `/api/metrics` | System-wide metrics | Yes (Admin) |
-| POST | `/admin/eval-sample` | Run evaluation on sample data | Yes (Admin) |
+| POST | `/api/admin/eval-sample` | Run evaluation on sample data | Yes (Admin) |
 
 ## Deployment
 
