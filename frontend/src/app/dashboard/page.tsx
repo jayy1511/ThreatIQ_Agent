@@ -183,7 +183,7 @@ export default function DashboardPage() {
                     </span>
                     <span className="text-sm text-muted-foreground">~3 min</span>
                   </div>
-                  <Link href="/lessons/today">
+                  <Link href="/lessons/today" className="block mt-2">
                     <Button className="w-full" size="lg">
                       {todayLesson.already_completed ? "Review Lesson" : "Start Lesson"}
                     </Button>
@@ -222,7 +222,7 @@ export default function DashboardPage() {
                     </div>
                     <div>
                       <div className="text-2xl font-bold text-blue-500">
-                        Nv. {lessonProgress.level}
+                        Lv. {lessonProgress.level}
                       </div>
                       <p className="text-xs text-muted-foreground">Level</p>
                     </div>

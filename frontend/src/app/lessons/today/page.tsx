@@ -86,7 +86,7 @@ export default function TodayLessonPage() {
                     streak_current: progress.streak_current,
                     streak_best: progress.streak_best,
                     already_completed_today: true,
-                    message: "Tu as déjà complété la leçon du jour !",
+                    message: "You have already completed your lesson for today!",
                     correct_answers: []
                 });
             }
@@ -204,7 +204,7 @@ export default function TodayLessonPage() {
                         <h1 className="text-2xl font-bold">{lesson.title}</h1>
                         <div className="flex items-center gap-2 mt-1">
                             <Badge className={getTopicColor(lesson.topic)}>{lesson.topic}</Badge>
-                            <span className="text-sm text-muted-foreground">Leçon du jour</span>
+                            <span className="text-sm text-muted-foreground">Today's Lesson</span>
                         </div>
                     </div>
                 </div>
@@ -290,7 +290,7 @@ export default function TodayLessonPage() {
                 {currentSection === "results" && result && (
                     <div className="space-y-6">
                         {/* Score Card */}
-                        <Card className={result.already_completed_today ? "border-amber-500" : "border-green-500"}>
+                        <Card className={result.already_completed_today ? "border-emerald-500" : "border-green-500"}>
                             <CardHeader className="text-center pb-2">
                                 {!result.already_completed_today ? (
                                     <div className="flex flex-col items-center">
@@ -299,7 +299,7 @@ export default function TodayLessonPage() {
                                     </div>
                                 ) : (
                                     <div className="flex flex-col items-center">
-                                        <div className="text-4xl mb-2">✅</div>
+                                        <div className="mb-2"><CheckCircle2 className="h-12 w-12 text-emerald-500 mx-auto" /></div>
                                         <CardTitle className="text-xl">{result.message}</CardTitle>
                                     </div>
                                 )}
