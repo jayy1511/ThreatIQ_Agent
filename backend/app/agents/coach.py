@@ -116,7 +116,7 @@ USER CONTEXT:
 Generate a coaching response as JSON with this EXACT structure:
 {{
     "verdict": "{classification['label']}",
-    "explanation": "Detailed, educational explanation highlighting specific red flags in the message. Use bold markers like **this** for key terms. Keep it conversational and encouraging.",
+    "explanation": "Detailed, educational explanation highlighting specific red flags in the message. Keep it conversational and encouraging. Do NOT use markdown formatting like **bold** or *italics* - use plain text only.",
     "tips": ["Actionable tip 1", "Actionable tip 2", "Actionable tip 3"],
     "quiz": {{
         "question": "Test question about this specific message or phishing concept",
