@@ -32,6 +32,7 @@ export default function AnalyzePage() {
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [userGuess, setUserGuess] = useState<'phishing' | 'safe' | null>(null);
+  const [quizAnswer, setQuizAnswer] = useState<{ selected: string | null, isCorrect: boolean | null }>({ selected: null, isCorrect: null });
   const { user } = useAuth();
 
   const handleAnalyze = async (skipGuess: boolean = false) => {
@@ -76,6 +77,7 @@ export default function AnalyzePage() {
       }
 
       setResult(data);
+      setQuizAnswer({ selected: null, isCorrect: null }); // Reset quiz for new analysis
     } catch (err: any) {
       console.error('Analysis failed:', err);
       setResult(null);
@@ -350,27 +352,57 @@ export default function AnalyzePage() {
                               </p>
                               <div className="space-y-2">
                                 {result.coach_response.quiz.options.map(
-                                  (option: string, i: number) => (
-                                    <Button
-                                      key={i}
-                                      variant="outline"
-                                      className="w-full justify-start h-auto py-3 px-4 whitespace-normal text-left"
-                                      onClick={() => {
-                                        if (
-                                          option ===
-                                          result.coach_response.quiz.correct_answer
-                                        ) {
-                                          alert('Correct!');
-                                        } else {
-                                          alert('Not quite. Try again!');
-                                        }
-                                      }}
-                                    >
-                                      {option}
-                                    </Button>
-                                  )
+                                  (option: string, i: number) => {
+                                    const isSelected = quizAnswer.selected === option;
+                                    const isCorrectOption = option === result.coach_response.quiz.correct_answer;
+                                    const showResult = quizAnswer.selected !== null;
+
+                                    return (
+                                      <Button
+                                        key={i}
+                                        variant="outline"
+                                        disabled={showResult}
+                                        className={`w-full justify-start h-auto py-3 px-4 whitespace-normal text-left transition-all ${showResult && isCorrectOption
+                                          ? 'border-green-500 bg-green-500/10 text-green-500'
+                                          : showResult && isSelected && !isCorrectOption
+                                            ? 'border-red-500 bg-red-500/10 text-red-500'
+                                            : ''
+                                          }`}
+                                        onClick={() => {
+                                          const correct = option === result.coach_response.quiz.correct_answer;
+                                          setQuizAnswer({ selected: option, isCorrect: correct });
+                                        }}
+                                      >
+                                        {option}
+                                        {showResult && isCorrectOption && (
+                                          <CheckCircle className="ml-2 h-4 w-4 inline" />
+                                        )}
+                                        {showResult && isSelected && !isCorrectOption && (
+                                          <AlertTriangle className="ml-2 h-4 w-4 inline" />
+                                        )}
+                                      </Button>
+                                    );
+                                  }
                                 )}
                               </div>
+                              {quizAnswer.selected && (
+                                <div className={`p-3 rounded-lg flex items-center gap-2 ${quizAnswer.isCorrect
+                                  ? 'bg-green-500/10 border border-green-500/30'
+                                  : 'bg-red-500/10 border border-red-500/30'
+                                  }`}>
+                                  {quizAnswer.isCorrect ? (
+                                    <>
+                                      <CheckCircle className="h-5 w-5 text-green-500" />
+                                      <span className="text-green-500 font-medium">Correct! Well done.</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <AlertTriangle className="h-5 w-5 text-red-500" />
+                                      <span className="text-red-500 font-medium">Not quite. The correct answer is highlighted above.</span>
+                                    </>
+                                  )}
+                                </div>
+                              )}
                             </div>
                           ) : (
                             <p className="text-muted-foreground">
