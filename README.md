@@ -12,6 +12,7 @@ An intelligent phishing detection and security training platform leveraging Goog
 - [Gmail Integration](#gmail-integration)
 - [Daily Lessons System](#daily-lessons-system)
 - [API Documentation](#api-documentation)
+- [CI/CD](#cicd)
 - [Deployment](#deployment)
 - [Security](#security)
 - [License](#license)
@@ -583,6 +584,37 @@ The system uses dedicated collections:
 | GET | `/health` | Health check status | No |
 | GET | `/api/metrics` | System-wide metrics | Yes (Admin) |
 | POST | `/api/admin/eval-sample` | Run evaluation on sample data | Yes (Admin) |
+
+## CI/CD
+
+ThreatIQ uses GitHub Actions for continuous integration. The workflow runs automatically on every push and pull request.
+
+### Checks Performed
+
+**Frontend (Node.js 20)**
+- Install dependencies (`npm ci`)
+- Lint (`npm run lint`)
+- Build (`npm run build`)
+
+**Backend (Python 3.11)**
+- Install dependencies (`pip install -r requirements.txt`)
+- Syntax check (`python -m compileall`)
+- Run tests (`pytest tests/`)
+
+### Viewing Results
+
+1. Go to the **Actions** tab in GitHub repository
+2. Click on a workflow run to see details
+3. Each job (Frontend/Backend) shows step-by-step results
+4. Failed checks block PR merges when branch protection is enabled
+
+### Deployment Trigger
+
+After CI passes on the `main` branch:
+- **Vercel** auto-deploys frontend from connected GitHub repo
+- **Render** auto-deploys backend from connected GitHub repo
+
+No manual action required once CI passes.
 
 ## Deployment
 
