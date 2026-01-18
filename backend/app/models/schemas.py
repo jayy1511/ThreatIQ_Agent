@@ -23,7 +23,8 @@ class PhishingExample(BaseModel):
     """Similar phishing example from dataset."""
     message: str
     category: str
-    description: str
+    similarity: Optional[float] = None  # Similarity score (0-1)
+    description: Optional[str] = None   # Made optional for backward compatibility
 
 
 class QuizQuestion(BaseModel):

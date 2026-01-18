@@ -32,7 +32,7 @@ def load_phishing_dataset() -> Dict[str, int]:
     Returns:
         Dictionary with dataset stats
     """
-    global _dataset_df
+    global _dataset_df, _vectorizer, _tfidf_matrix
     
     try:
         import os
@@ -43,6 +43,9 @@ def load_phishing_dataset() -> Dict[str, int]:
             _create_dummy_dataset(dataset_path)
         
         _dataset_df = pd.read_csv(dataset_path)
+        # Reset vectorizer cache to force rebuild with new data
+        _vectorizer = None
+        _tfidf_matrix = None
         logger.info(f"Loaded {len(_dataset_df)} examples from dataset")
         
         return {
@@ -104,8 +107,8 @@ def find_similar_phishing(message: str, category: str = None, max_results: int =
             _vectorizer = TfidfVectorizer(max_features=500, stop_words='english')
             _tfidf_matrix = _vectorizer.fit_transform(_dataset_df['text'].fillna(''))
         
-        # Get phishing examples only
-        phishing_df = _dataset_df[_dataset_df['label'] == 1].copy()
+        # Get phishing examples only and reset index for consistent alignment
+        phishing_df = _dataset_df[_dataset_df['label'] == 1].reset_index(drop=True)
         
         if len(phishing_df) == 0:
             return []
@@ -113,22 +116,31 @@ def find_similar_phishing(message: str, category: str = None, max_results: int =
         # Vectorize input message
         message_vec = _vectorizer.transform([message])
         
-        # Calculate similarities
-        phishing_indices = phishing_df.index
-        phishing_tfidf = _tfidf_matrix[phishing_indices]
+        # Get the original indices of phishing examples in the main dataframe
+        phishing_mask = _dataset_df['label'] == 1
+        phishing_original_indices = _dataset_df[phishing_mask].index.tolist()
         
+        # Get TF-IDF vectors for phishing examples
+        phishing_tfidf = _tfidf_matrix[phishing_original_indices]
+        
+        # Calculate similarities
         similarities = cosine_similarity(message_vec, phishing_tfidf)[0]
         
-        # Get top results
+        # Get top results (indices now correspond to phishing_df rows)
         top_indices = np.argsort(similarities)[::-1][:max_results]
         
         results = []
         for idx in top_indices:
+            sim_score = similarities[idx]
+            # Handle NaN or invalid similarity scores
+            if np.isnan(sim_score) or sim_score < 0:
+                sim_score = 0.0
+            
             row = phishing_df.iloc[idx]
             results.append({
-                "message": row['text'][:200],  # Truncate for context
-                "category": row['category'],
-                "description": f"Similar phishing example ({int(similarities[idx] * 100)}% match)"
+                "message": row['text'][:200] if pd.notna(row['text']) else "",
+                "category": row['category'] if pd.notna(row['category']) else "unknown",
+                "similarity": round(sim_score, 3)  # Return as decimal (0-1), frontend multiplies by 100
             })
         
         return results
