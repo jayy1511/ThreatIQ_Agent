@@ -57,7 +57,7 @@ export default function Home() {
             <FeatureCard
               icon={<Lock className="h-10 w-10 text-primary" />}
               title="Personalized Coaching"
-              description="Get tailored tips and quizzes based on your specific weak spots and learning history."
+              description="Get tailored tips, lessons, and quizzes based on your specific weak spots and learning history."
             />
             <FeatureCard
               icon={<CheckCircle className="h-10 w-10 text-primary" />}

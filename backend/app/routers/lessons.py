@@ -307,6 +307,42 @@ async def get_progress(user_data: dict = Depends(verify_firebase_token)):
         raise HTTPException(status_code=500, detail="Failed to get progress")
 
 
+@router.get("/lessons/recent")
+async def get_recent_completions(
+    limit: int = 5,
+    user_data: dict = Depends(verify_firebase_token)
+):
+    """Get user's recent lesson completions."""
+    try:
+        user_id = user_data.get('uid')
+        db = Database.get_db()
+        
+        # Fetch recent completions
+        cursor = db.lesson_completions.find(
+            {"user_id": user_id}
+        ).sort("created_at", -1).limit(limit)
+        
+        recent = []
+        async for completion in cursor:
+            # Get lesson details
+            lesson = get_lesson_by_id(completion.get("lesson_id"))
+            
+            recent.append({
+                "lesson_id": completion.get("lesson_id"),
+                "date": completion.get("date"),
+                "score_percent": completion.get("score_percent"),
+                "xp_earned": completion.get("xp_earned"),
+                "lesson_title": lesson.get("title") if lesson else "Unknown Lesson",
+                "lesson_topic": lesson.get("topic") if lesson else "unknown"
+            })
+        
+        return {"recent_completions": recent}
+        
+    except Exception as e:
+        logger.error(f"Error getting recent completions: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to get recent completions")
+
+
 @router.get("/lessons")
 async def list_lessons(user_data: dict = Depends(verify_firebase_token)):
     """Get list of all available lessons."""
