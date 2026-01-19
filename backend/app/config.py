@@ -27,6 +27,9 @@ class Settings(BaseSettings):
     api_host: str = "0.0.0.0"
     api_port: int = 8000
     
+    # Microservices
+    analysis_service_url: str = "http://localhost:8010"
+    
     environment: str = "development"
     
     @property

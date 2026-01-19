@@ -31,26 +31,26 @@ jobs:
       - name: Run lint
         run: |
           if npm run lint --if-present 2>/dev/null; then
-            echo "✓ Lint passed"
+            echo "Lint passed"
           else
-            echo "⚠ Lint script not found or failed"
+            echo "Lint script not found or failed"
           fi
 
       - name: Run typecheck
         run: |
           if npm run typecheck --if-present 2>/dev/null; then
-            echo "✓ Typecheck passed"
+            echo "Typecheck passed"
           else
-            echo "ℹ Typecheck script not found, skipping"
+            echo "Typecheck script not found, skipping"
           fi
         continue-on-error: true
 
       - name: Run tests
         run: |
           if npm test --if-present 2>/dev/null; then
-            echo "✓ Tests passed"
+            echo "Tests passed"
           else
-            echo "ℹ Test script not found, skipping"
+            echo "Test script not found, skipping"
           fi
         continue-on-error: true
 
@@ -92,6 +92,6 @@ jobs:
             pip install pytest pytest-asyncio || true
             python -m pytest tests/ -v --tb=short || python -m unittest discover -s tests -v
           else
-            echo "ℹ No tests found, skipping"
+            echo "No tests found, skipping"
           fi
         continue-on-error: false
