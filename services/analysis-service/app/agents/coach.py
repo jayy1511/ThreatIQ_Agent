@@ -105,16 +105,19 @@ USER CONTEXT:
 Generate a coaching response as JSON with this EXACT structure:
 {{
     "verdict": "{classification['label']}",
-    "explanation": "Detailed, educational explanation. Do NOT use markdown formatting - use plain text only.",
-    "tips": ["Actionable tip 1", "Actionable tip 2", "Actionable tip 3"],
+    "explanation": "Brief 2-3 sentence explanation. Be concise and direct. No markdown.",
+    "tips": ["Short tip 1", "Short tip 2", "Short tip 3"],
     "quiz": {{
-        "question": "Test question about this specific message",
+        "question": "One question about this message",
         "options": ["Option A", "Option B", "Option C", "Option D"],
-        "correct_answer": "Option X (must match one of the options exactly)"
+        "correct_answer": "Option X (must match exactly)"
     }}
 }}
 
-Generate the JSON response now:"""
+IMPORTANT RULES:
+- explanation MUST be under 150 words (2-3 sentences max)
+- tips should be 1 sentence each
+- No markdown formatting"""
         
         return prompt
     

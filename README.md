@@ -601,6 +601,11 @@ ThreatIQ uses GitHub Actions for continuous integration. The workflow runs autom
 - Syntax check (`python -m compileall`)
 - Run tests (`pytest tests/`)
 
+**Analysis Service (Python 3.11)**
+- Install dependencies
+- Syntax check
+- Run tests if present
+
 ### Viewing Results
 
 1. Go to the **Actions** tab in GitHub repository
