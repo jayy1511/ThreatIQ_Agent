@@ -1,0 +1,15 @@
+# Core Framework
+fastapi==0.118.3
+uvicorn[standard]==0.38.0
+python-dotenv==1.0.1
+pydantic==2.12.4
+pydantic-settings==2.12.0
+
+# ML & Data (for similarity search)
+numpy==2.3.5
+pandas==2.3.3
+scikit-learn==1.7.2
+
+# Gemini
+google-generativeai==0.8.5
+google-ai-generativelanguage==0.6.15

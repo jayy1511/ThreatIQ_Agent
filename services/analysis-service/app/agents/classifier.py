@@ -1,0 +1,161 @@
+"""
+Classifier Agent - Analyzes messages for phishing indicators
+"""
+
+import logging
+import json
+from typing import Dict, List
+
+from app.llm.gemini_client import get_gemini_client
+
+logger = logging.getLogger(__name__)
+
+
+class ClassifierAgent:
+    """Classifier Agent - Analyzes messages and produces structured classification."""
+
+    def __init__(self) -> None:
+        self.system_instruction = """
+You are a phishing detection expert. Your task is to analyse messages and decide
+whether they are "phishing", "safe", or "unclear".
+
+Return your analysis as a JSON object with this EXACT structure:
+
+{
+  "label": "phishing" | "safe" | "unclear",
+  "confidence": 0.0-1.0,
+  "reason_tags": ["tag1", "tag2", ...],
+  "explanation": "Brief explanation of your decision"
+}
+
+Possible reason_tags:
+- suspicious_link
+- urgent_language
+- sender_mismatch
+- requests_credentials
+- spelling_errors
+- impersonation
+- too_good_to_be_true
+- unknown_sender
+- generic_greeting
+- suspicious_attachment
+
+Be precise and conservative. If there is no concrete sign of phishing, use "safe".
+"""
+        self.gemini_client = get_gemini_client()
+
+    async def classify(self, message: str) -> Dict:
+        """Classify a message as phishing, safe, or unclear."""
+        try:
+            prompt = f"""
+Analyze the following message and decide if it is "phishing", "safe", or "unclear".
+Respond ONLY with a single JSON object with the keys:
+  "label", "confidence", "reason_tags", "explanation".
+
+MESSAGE:
+{message}
+"""
+
+            response_text = await self.gemini_client.generate(
+                prompt=prompt,
+                system_instruction=self.system_instruction,
+                generation_config={
+                    "temperature": 0.3,
+                    "top_p": 0.8,
+                    "top_k": 40,
+                    "response_mime_type": "application/json",
+                },
+                use_cache=True
+            )
+
+            logger.info("Raw Gemini response: %s...", response_text[:200])
+
+            json_text = response_text
+            if "```" in json_text:
+                parts = json_text.split("```")
+                for part in parts:
+                    candidate = part.strip()
+                    if candidate.startswith("json"):
+                        json_text = candidate[4:].strip()
+                        break
+                    if "{" in candidate and "}" in candidate:
+                        json_text = candidate
+                        break
+
+            if "{" in json_text and "}" in json_text:
+                start = json_text.find("{")
+                end = json_text.rfind("}") + 1
+                json_text = json_text[start:end]
+
+            result = json.loads(json_text)
+            text_lower = json_text.lower()
+
+            if "label" not in result or not result.get("label"):
+                if "not phishing" in text_lower or "appears safe" in text_lower:
+                    result["label"] = "safe"
+                elif "safe" in text_lower or "legitimate" in text_lower:
+                    result["label"] = "safe"
+                elif "phishing" in text_lower or "scam" in text_lower:
+                    result["label"] = "phishing"
+                else:
+                    result["label"] = "unclear"
+
+            if result["label"] not in ["phishing", "safe", "unclear"]:
+                result["label"] = "unclear"
+
+            if "confidence" not in result or result["confidence"] is None:
+                result["confidence"] = 0.7 if result["label"] != "unclear" else 0.5
+
+            if "reason_tags" not in result or not isinstance(result["reason_tags"], list):
+                result["reason_tags"] = ["analysis_completed"]
+
+            if "explanation" not in result or not result["explanation"]:
+                result["explanation"] = "Analysis completed."
+
+            try:
+                result["confidence"] = max(0.0, min(1.0, float(result["confidence"])))
+            except Exception:
+                result["confidence"] = 0.7 if result["label"] != "unclear" else 0.5
+
+            logger.info("Classification: %s (confidence: %.2f)", result["label"], result["confidence"])
+            return result
+
+        except json.JSONDecodeError as e:
+            logger.error("Error parsing JSON response: %s", e)
+            return {
+                "label": "unclear",
+                "confidence": 0.5,
+                "reason_tags": ["json_parse_error"],
+                "explanation": "Unable to parse classification result.",
+            }
+
+        except Exception as e:
+            logger.error("Error in classification: %s", e, exc_info=True)
+            return {
+                "label": "unclear",
+                "confidence": 0.5,
+                "reason_tags": ["error"],
+                "explanation": f"Error analysing message: {e}",
+            }
+
+    def determine_category(self, reason_tags: List[str], message: str) -> str:
+        """Determine a phishing category based on reason_tags and message content."""
+        message_lower = message.lower()
+
+        if any(word in message_lower for word in ["bank", "account", "credit card", "payment"]):
+            return "fake_bank"
+        elif any(word in message_lower for word in ["package", "delivery", "shipping", "fedex", "ups"]):
+            return "fake_shipping"
+        elif any(word in message_lower for word in ["password", "verify", "confirm", "security alert"]):
+            return "account_alert"
+        elif any(word in message_lower for word in ["prize", "winner", "congratulations", "lottery"]):
+            return "prize_scam"
+        elif any(word in message_lower for word in ["irs", "tax", "refund", "government"]):
+            return "tax_scam"
+        elif "impersonation" in reason_tags:
+            return "impersonation"
+        else:
+            return "general_phishing"
+
+
+classifier_agent = ClassifierAgent()
