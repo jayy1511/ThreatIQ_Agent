@@ -2,7 +2,6 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.models.database import Database
-from app.tools.dataset_tools import phishing_dataset
 from agent import root_agent  
 import logging
 from app.routers import metrics
@@ -60,8 +59,8 @@ async def startup_event():
     # Connect to MongoDB
     await Database.connect_db()
 
-    # Load phishing dataset
-    phishing_dataset.load_dataset()
+    # Note: Dataset loading moved to analysis-service
+    # Gateway now calls analysis-service for AI processing
 
     logger.info("ThreatIQ API started successfully!")
 
@@ -95,7 +94,6 @@ async def health_check():
         return {
             "status": "healthy",
             "database": "connected",
-            "dataset": "loaded" if phishing_dataset._loaded else "not loaded",
         }
     except Exception as e:
         logger.error(f"Health check failed: {e}")
