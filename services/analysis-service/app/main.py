@@ -79,12 +79,7 @@ async def analyze_message(request: AnalysisRequest):
 
 @app.on_event("startup")
 async def startup_event():
-    """Initialize components on startup."""
+    """Initialize components on startup - fast, no blocking loads."""
     logger.info("Analysis Service starting up...")
-    
-    # Pre-load dataset
-    from app.tools.dataset_tools import load_phishing_dataset
-    result = load_phishing_dataset()
-    logger.info(f"Dataset status: {result}")
-    
+    logger.info("Dataset will load lazily on first request")
     logger.info("Analysis Service ready!")
