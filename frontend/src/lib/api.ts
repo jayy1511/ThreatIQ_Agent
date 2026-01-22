@@ -133,4 +133,9 @@ export const getRecentLessons = async (limit: number = 5) => {
   return response.data;
 };
 
+export const getLessonsList = async () => {
+  const response = await api.get("/api/lessons/list");
+  return response.data;
+};
+
 export default api;
