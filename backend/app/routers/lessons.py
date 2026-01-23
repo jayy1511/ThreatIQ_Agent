@@ -79,6 +79,25 @@ def calculate_xp(score_percent: int) -> int:
     return base + bonus + perfect_bonus
 
 
+@router.get("/lessons/list")
+async def get_lessons_list():
+    """Get list of all available lessons (metadata only, no content)."""
+    try:
+        lessons = get_all_lessons()
+        # Return only metadata for the list view
+        return [
+            {
+                "lesson_id": lesson["lesson_id"],
+                "title": lesson["title"],
+                "topic": lesson["topic"]
+            }
+            for lesson in lessons
+        ]
+    except Exception as e:
+        logger.error(f"Error getting lessons list: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get lessons list")
+
+
 @router.get("/lessons/today")
 async def get_today_lesson(user_data: dict = Depends(verify_firebase_token)):
     """Get today's lesson for the authenticated user."""

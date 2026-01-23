@@ -20,6 +20,9 @@ import { ModeToggle } from "@/components/mode-toggle"
 const navLinks = [
   { href: "/analyze", label: "Analyze" },
   { href: "/dashboard", label: "Dashboard" },
+  { href: "/lessons", label: "Lessons" },
+  { href: "/gmail", label: "Gmail" },
+  { href: "/progress", label: "Progress" },
   { href: "/history", label: "History" },
 ]
 
@@ -39,9 +42,8 @@ function NavLink({
     <Link
       href={href}
       onClick={onClick}
-      className={`text-sm font-medium transition-colors ${
-        isActive ? "text-primary" : "text-muted-foreground hover:text-primary"
-      }`}
+      className={`text-sm font-medium transition-colors ${isActive ? "text-primary" : "text-muted-foreground hover:text-primary"
+        }`}
     >
       {label}
     </Link>
