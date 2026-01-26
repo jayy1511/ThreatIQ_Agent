@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     frontend_url: str
     token_encryption_key: str
     
-    cors_origins: str = "http://localhost:3000"
+    cors_origins: str = "http://localhost:3000,http://localhost:8081,http://localhost:8082,http://localhost:19006,http://127.0.0.1:8081,http://127.0.0.1:8082"
     api_host: str = "0.0.0.0"
     api_port: int = 8000
     
