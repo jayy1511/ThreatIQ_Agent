@@ -49,40 +49,54 @@ async function parseError(response: Response): Promise<string> {
 // Generic GET request
 async function get<T = any>(endpoint: string): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`;
-    console.log(`[API] GET ${endpoint}`);
+    console.log(`[API] GET ${url}`);
 
-    const response = await fetch(url, {
-        method: "GET",
-        headers: await getHeaders(),
-    });
+    try {
+        const response = await fetch(url, {
+            method: "GET",
+            headers: await getHeaders(),
+        });
 
-    if (!response.ok) {
-        const errorMessage = await parseError(response);
-        console.error(`[API] GET ${endpoint} failed:`, errorMessage);
-        throw new Error(errorMessage);
+        if (!response.ok) {
+            const errorMessage = await parseError(response);
+            console.error(`[API] GET failed: ${response.status} ${url}`, errorMessage);
+            throw new Error(errorMessage);
+        }
+
+        return response.json();
+    } catch (error: any) {
+        if (error.message?.includes("fetch")) {
+            console.error(`[API] Network error: ${url}`, error.message);
+        }
+        throw error;
     }
-
-    return response.json();
 }
 
 // Generic POST request
 async function post<T = any>(endpoint: string, body?: any): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`;
-    console.log(`[API] POST ${endpoint}`, body);
+    console.log(`[API] POST ${url}`);
 
-    const response = await fetch(url, {
-        method: "POST",
-        headers: await getHeaders(),
-        body: body ? JSON.stringify(body) : undefined,
-    });
+    try {
+        const response = await fetch(url, {
+            method: "POST",
+            headers: await getHeaders(),
+            body: body ? JSON.stringify(body) : undefined,
+        });
 
-    if (!response.ok) {
-        const errorMessage = await parseError(response);
-        console.error(`[API] POST ${endpoint} failed:`, errorMessage);
-        throw new Error(errorMessage);
+        if (!response.ok) {
+            const errorMessage = await parseError(response);
+            console.error(`[API] POST failed: ${response.status} ${url}`, errorMessage);
+            throw new Error(errorMessage);
+        }
+
+        return response.json();
+    } catch (error: any) {
+        if (error.message?.includes("fetch")) {
+            console.error(`[API] Network error: ${url}`, error.message);
+        }
+        throw error;
     }
-
-    return response.json();
 }
 
 // ============== ANALYSIS APIs ==============
