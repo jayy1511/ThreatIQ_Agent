@@ -90,6 +90,17 @@ npm run dev
 ```
 Frontend runs at `http://localhost:3000`
 
+### Mobile App Setup (Expo)
+```bash
+cd mobile
+npm install
+cp .env.example .env    # Configure API URL and Firebase keys
+npx expo start
+```
+Press `w` for web preview at `http://localhost:8081`
+
+> **Note:** Set `EXPO_PUBLIC_API_URL=https://threatiq-gateway-service.onrender.com` (no trailing slash) to use the deployed gateway.
+
 ## Environment Variables
 
 ### Backend (.env)
