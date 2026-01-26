@@ -66,6 +66,12 @@ const styles = StyleSheet.create({
         backgroundColor: colors.card,
         borderRadius: radius.lg,
         overflow: "hidden",
+        // Subtle shadow for depth (matches web cards)
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 2,
+        elevation: 1,
     },
     cardDefault: {
         borderWidth: 1,
