@@ -1,56 +1,95 @@
 /**
  * Design System Tokens
- * Matches web shadcn/ui styling exactly
+ * Matches web shadcn/ui styling EXACTLY
+ * 
+ * Web uses HSL values - converted to hex:
+ * Light mode: primary = 0 0% 9% (black/#171717)
+ * Dark mode: primary = 0 0% 98% (white/#fafafa)
  */
 
-// Colors - matching shadcn light theme
-export const colors = {
-    // Base colors
-    background: "#ffffff",
-    foreground: "#09090b",
+// Light Theme Colors - matching web globals.css exactly
+export const lightColors = {
+    // Base
+    background: "#ffffff",           // 0 0% 100%
+    foreground: "#0a0a0a",           // 0 0% 3.9%
 
     // Card
     card: "#ffffff",
-    cardForeground: "#09090b",
+    cardForeground: "#0a0a0a",
 
-    // Primary (shadcn blue)
-    primary: "#2563eb",
-    primaryForeground: "#f8fafc",
+    // Primary (BLACK in light theme!)
+    primary: "#171717",              // 0 0% 9%
+    primaryForeground: "#fafafa",    // 0 0% 98%
 
     // Secondary
-    secondary: "#f4f4f5",
-    secondaryForeground: "#18181b",
+    secondary: "#f5f5f5",            // 0 0% 96.1%
+    secondaryForeground: "#171717",  // 0 0% 9%
 
     // Muted
-    muted: "#f4f4f5",
-    mutedForeground: "#71717a",
+    muted: "#f5f5f5",                // 0 0% 96.1%
+    mutedForeground: "#737373",      // 0 0% 45.1%
 
     // Accent
-    accent: "#f4f4f5",
-    accentForeground: "#18181b",
+    accent: "#f5f5f5",
+    accentForeground: "#171717",
 
     // Destructive
-    destructive: "#ef4444",
+    destructive: "#ef4444",          // 0 84.2% 60.2%
     destructiveForeground: "#fafafa",
 
     // Border & Input
-    border: "#e4e4e7",
-    input: "#e4e4e7",
-    ring: "#2563eb",
+    border: "#e5e5e5",               // 0 0% 89.8%
+    input: "#e5e5e5",
+    ring: "#0a0a0a",                 // 0 0% 3.9%
 
-    // Semantic Colors
+    // Semantic Colors (feature-specific)
     success: "#22c55e",
     warning: "#eab308",
     orange: "#f97316",
     blue: "#3b82f6",
     purple: "#a855f7",
-
-    // Transparent overlays
-    primaryLight: "rgba(37, 99, 235, 0.1)",
-    successLight: "rgba(34, 197, 94, 0.1)",
-    warningLight: "rgba(234, 179, 8, 0.15)",
-    orangeLight: "rgba(249, 115, 22, 0.1)",
+    red: "#ef4444",
+    green: "#22c55e",
 };
+
+// Dark Theme Colors
+export const darkColors = {
+    background: "#0a0a0a",           // 0 0% 3.9%
+    foreground: "#fafafa",           // 0 0% 98%
+
+    card: "#0a0a0a",
+    cardForeground: "#fafafa",
+
+    primary: "#fafafa",              // 0 0% 98%
+    primaryForeground: "#171717",    // 0 0% 9%
+
+    secondary: "#262626",            // 0 0% 14.9%
+    secondaryForeground: "#fafafa",
+
+    muted: "#262626",
+    mutedForeground: "#a3a3a3",      // 0 0% 63.9%
+
+    accent: "#262626",
+    accentForeground: "#fafafa",
+
+    destructive: "#7f1d1d",          // 0 62.8% 30.6%
+    destructiveForeground: "#fafafa",
+
+    border: "#262626",
+    input: "#262626",
+    ring: "#d4d4d4",                 // 0 0% 83.1%
+
+    success: "#22c55e",
+    warning: "#eab308",
+    orange: "#f97316",
+    blue: "#3b82f6",
+    purple: "#a855f7",
+    red: "#ef4444",
+    green: "#22c55e",
+};
+
+// Default to light theme (can be switched via context)
+export const colors = lightColors;
 
 // Spacing - consistent with web Tailwind spacing
 export const spacing = {
@@ -62,7 +101,7 @@ export const spacing = {
     2.5: 10,
     3: 12,
     3.5: 14,
-    4: 16, // Base padding
+    4: 16,
     5: 20,
     6: 24,
     7: 28,
@@ -75,22 +114,22 @@ export const spacing = {
 // Border Radius - matching web rounded-* classes
 export const radius = {
     none: 0,
-    sm: 6,    // rounded-sm
-    md: 8,    // rounded-md / rounded
-    lg: 12,   // rounded-lg (cards)
-    xl: 16,   // rounded-xl
+    sm: 6,
+    md: 8,
+    lg: 12,
+    xl: 16,
     full: 9999,
 };
 
 // Font Sizes - matching Tailwind text-* scale
 export const fontSize = {
-    xs: 12,    // text-xs
-    sm: 14,    // text-sm
-    base: 16,  // text-base
-    lg: 18,    // text-lg
-    xl: 20,    // text-xl
-    "2xl": 24, // text-2xl
-    "3xl": 30, // text-3xl
+    xs: 12,
+    sm: 14,
+    base: 16,
+    lg: 18,
+    xl: 20,
+    "2xl": 24,
+    "3xl": 30,
 };
 
 // Font Weights
@@ -109,25 +148,7 @@ export const lineHeight = {
     relaxed: 1.625,
 };
 
-// Shadows - subtle like shadcn
-export const shadows = {
-    sm: {
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 2,
-        elevation: 1,
-    },
-    md: {
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 2,
-    },
-};
-
-// Icon Sizes - matching lucide-react standard sizes
+// Icon Sizes
 export const iconSize = {
     xs: 12,
     sm: 16,
@@ -138,11 +159,12 @@ export const iconSize = {
 
 export default {
     colors,
+    lightColors,
+    darkColors,
     spacing,
     radius,
     fontSize,
     fontWeight,
     lineHeight,
-    shadows,
     iconSize,
 };

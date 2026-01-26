@@ -1,28 +1,84 @@
 /**
- * Gmail Screen - Matches web gmail integration layout
+ * Gmail Screen - With real API integration
  */
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
     View,
     Text,
     ScrollView,
     StyleSheet,
     SafeAreaView,
+    ActivityIndicator,
+    Linking,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Card, CardHeader, CardContent, CardTitle, CardDescription, Button } from "../components/ui";
 import { colors, spacing, radius, fontSize, fontWeight } from "../theme";
+import { useAuth } from "../context/AuthContext";
+import { getGmailStatus, getGmailConnectUrl, getGmailHistory, API_BASE_URL } from "../lib/api";
 
 export default function GmailScreen() {
-    // Placeholder data
-    const gmailConnected = false;
+    const { user } = useAuth();
+    const [loading, setLoading] = useState(true);
+    const [gmailConnected, setGmailConnected] = useState(false);
+    const [recentScans, setRecentScans] = useState<any[]>([]);
+    const [connecting, setConnecting] = useState(false);
 
-    const recentScans = [
-        { id: "1", subject: "Urgent: Verify your account", verdict: "phishing", date: "2 hours ago" },
-        { id: "2", subject: "Your order has shipped", verdict: "safe", date: "Yesterday" },
-        { id: "3", subject: "Password reset request", verdict: "phishing", date: "2 days ago" },
-    ];
+    useEffect(() => {
+        loadData();
+    }, [user]);
+
+    const loadData = async () => {
+        if (!user) {
+            setLoading(false);
+            return;
+        }
+
+        try {
+            const [statusData, historyData] = await Promise.all([
+                getGmailStatus().catch(() => ({ connected: false })),
+                getGmailHistory(10).catch(() => ({ results: [] })),
+            ]);
+
+            setGmailConnected(statusData?.connected || false);
+            setRecentScans(historyData?.results || []);
+        } catch (error) {
+            console.error("[Gmail] Error loading data:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleConnectGmail = async () => {
+        setConnecting(true);
+        try {
+            // Get the OAuth URL and open it in browser
+            const data = await getGmailConnectUrl();
+            if (data?.url) {
+                await Linking.openURL(data.url);
+            } else {
+                // Fallback: construct URL manually
+                const connectUrl = `${API_BASE_URL}/api/gmail/connect`;
+                await Linking.openURL(connectUrl);
+            }
+        } catch (error) {
+            console.error("[Gmail] Error connecting:", error);
+        } finally {
+            setConnecting(false);
+        }
+    };
+
+    if (loading) {
+        return (
+            <SafeAreaView style={styles.container}>
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color={colors.primary} />
+                    <Text style={styles.loadingText}>Loading Gmail status...</Text>
+                </View>
+            </SafeAreaView>
+        );
+    }
 
     return (
         <SafeAreaView style={styles.container}>
@@ -61,6 +117,8 @@ export default function GmailScreen() {
                             variant={gmailConnected ? "outline" : "default"}
                             fullWidth
                             style={styles.connectButton}
+                            onPress={handleConnectGmail}
+                            loading={connecting}
                         >
                             <Ionicons
                                 name={gmailConnected ? "settings" : "logo-google"}
@@ -74,63 +132,44 @@ export default function GmailScreen() {
                     </CardContent>
                 </Card>
 
-                {gmailConnected && (
-                    <>
-                        {/* Triage Controls */}
-                        <Card style={styles.triageCard}>
-                            <CardHeader>
-                                <View style={styles.titleWithIcon}>
-                                    <Ionicons name="scan" size={20} color={colors.primary} />
-                                    <CardTitle style={styles.cardTitleText}>Inbox Triage</CardTitle>
-                                </View>
-                                <CardDescription>
-                                    Scan your recent emails for threats
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <Button fullWidth>
-                                    <Ionicons name="refresh" size={16} color={colors.primaryForeground} />
-                                    <Text style={styles.buttonText}>Scan Inbox Now</Text>
-                                </Button>
-                            </CardContent>
-                        </Card>
-
-                        {/* Recent Scans */}
-                        <View style={styles.section}>
-                            <Text style={styles.sectionTitle}>Recent Scans</Text>
-                            {recentScans.map((scan) => (
-                                <Card key={scan.id} style={styles.scanCard}>
-                                    <CardContent style={styles.scanContent}>
-                                        <View style={styles.scanInfo}>
-                                            <View style={[
-                                                styles.verdictDot,
-                                                { backgroundColor: scan.verdict === "phishing" ? colors.destructive : colors.success }
-                                            ]} />
-                                            <View style={styles.scanText}>
-                                                <Text style={styles.scanSubject} numberOfLines={1}>{scan.subject}</Text>
-                                                <Text style={styles.scanDate}>{scan.date}</Text>
-                                            </View>
-                                        </View>
+                {gmailConnected && recentScans.length > 0 && (
+                    <View style={styles.section}>
+                        <Text style={styles.sectionTitle}>Recent Scans</Text>
+                        {recentScans.slice(0, 5).map((scan, idx) => (
+                            <Card key={idx} style={styles.scanCard}>
+                                <CardContent style={styles.scanContent}>
+                                    <View style={styles.scanInfo}>
                                         <View style={[
-                                            styles.verdictBadge,
-                                            { backgroundColor: scan.verdict === "phishing" ? `${colors.destructive}15` : `${colors.success}15` }
-                                        ]}>
-                                            <Text style={[
-                                                styles.verdictText,
-                                                { color: scan.verdict === "phishing" ? colors.destructive : colors.success }
-                                            ]}>
-                                                {scan.verdict}
+                                            styles.verdictDot,
+                                            { backgroundColor: scan.classification === "phishing" ? colors.destructive : colors.success }
+                                        ]} />
+                                        <View style={styles.scanText}>
+                                            <Text style={styles.scanSubject} numberOfLines={1}>
+                                                {scan.subject || "No subject"}
+                                            </Text>
+                                            <Text style={styles.scanDate}>
+                                                {scan.analyzed_at ? new Date(scan.analyzed_at).toLocaleDateString() : ""}
                                             </Text>
                                         </View>
-                                    </CardContent>
-                                </Card>
-                            ))}
-                        </View>
-                    </>
+                                    </View>
+                                    <View style={[
+                                        styles.verdictBadge,
+                                        { backgroundColor: scan.classification === "phishing" ? `${colors.destructive}15` : `${colors.success}15` }
+                                    ]}>
+                                        <Text style={[
+                                            styles.verdictText,
+                                            { color: scan.classification === "phishing" ? colors.destructive : colors.success }
+                                        ]}>
+                                            {scan.classification || "unknown"}
+                                        </Text>
+                                    </View>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </View>
                 )}
 
                 {!gmailConnected && (
-                    /* Features Preview */
                     <View style={styles.section}>
                         <Text style={styles.sectionTitle}>What you get</Text>
                         <View style={styles.featureList}>
@@ -179,6 +218,16 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: colors.background,
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        gap: spacing[4],
+    },
+    loadingText: {
+        fontSize: fontSize.base,
+        color: colors.mutedForeground,
     },
     scrollView: {
         flex: 1,
@@ -240,19 +289,6 @@ const styles = StyleSheet.create({
         fontWeight: fontWeight.medium,
         fontSize: fontSize.sm,
         marginLeft: spacing[2],
-    },
-    triageCard: {
-        marginBottom: spacing[6],
-    },
-    titleWithIcon: {
-        flexDirection: "row",
-        alignItems: "center",
-        gap: spacing[2],
-    },
-    cardTitleText: {
-        fontSize: fontSize.base,
-        fontWeight: fontWeight.semibold,
-        color: colors.foreground,
     },
     section: {
         marginBottom: spacing[4],

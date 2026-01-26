@@ -1,43 +1,92 @@
 /**
- * Dashboard Screen - Matches web mobile layout exactly
+ * Dashboard Screen - With real API data
  */
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
     View,
     Text,
     ScrollView,
     StyleSheet,
     SafeAreaView,
+    ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Card, CardHeader, CardContent, CardTitle, CardDescription, Button } from "../components/ui";
 import { colors, spacing, radius, fontSize, fontWeight } from "../theme";
+import { useAuth } from "../context/AuthContext";
+import { getUserSummary, getLessonProgress, getTodayLesson, getGmailStatus } from "../lib/api";
+
+interface LessonProgress {
+    xp_total: number;
+    level: number;
+    streak_current: number;
+    streak_best: number;
+    lessons_completed: number;
+}
+
+interface TodayLessonData {
+    lesson: { lesson_id: string; title: string; topic: string };
+    date: string;
+    already_completed: boolean;
+}
 
 export default function DashboardScreen() {
-    // Placeholder data
+    const { user } = useAuth();
+    const [loading, setLoading] = useState(true);
+    const [summary, setSummary] = useState<any>(null);
+    const [lessonProgress, setLessonProgress] = useState<LessonProgress | null>(null);
+    const [todayLesson, setTodayLesson] = useState<TodayLessonData | null>(null);
+    const [gmailConnected, setGmailConnected] = useState(false);
+
+    useEffect(() => {
+        loadData();
+    }, [user]);
+
+    const loadData = async () => {
+        if (!user) {
+            setLoading(false);
+            return;
+        }
+
+        try {
+            const [summaryData, progressData, lessonData, gmailData] = await Promise.all([
+                getUserSummary(user.uid).catch(() => null),
+                getLessonProgress().catch(() => null),
+                getTodayLesson().catch(() => null),
+                getGmailStatus().catch(() => ({ connected: false })),
+            ]);
+
+            setSummary(summaryData);
+            setLessonProgress(progressData);
+            setTodayLesson(lessonData);
+            setGmailConnected(gmailData?.connected || false);
+        } catch (error) {
+            console.error("[Dashboard] Error loading data:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const stats = {
-        totalAnalyzed: 42,
-        accuracy: 85,
-        streak: 7,
-        level: 3,
+        totalAnalyzed: summary?.total_analyzed || 0,
+        accuracy: summary?.accuracy || 0,
+        streak: lessonProgress?.streak_current || 0,
+        level: lessonProgress?.level || 1,
     };
 
-    const lessonProgress = {
-        xp_total: 250,
-        lessons_completed: 12,
-        streak_best: 14,
-    };
+    const weakSpots = summary?.weak_spots || [];
 
-    const todayLesson = {
-        title: "Spotting Phishing Links",
-        topic: "links",
-        already_completed: false,
-    };
-
-    const gmailConnected = false;
-
-    const weakSpots = ["suspicious links", "attachments"];
+    if (loading) {
+        return (
+            <SafeAreaView style={styles.container}>
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color={colors.primary} />
+                    <Text style={styles.loadingText}>Loading dashboard...</Text>
+                </View>
+            </SafeAreaView>
+        );
+    }
 
     return (
         <SafeAreaView style={styles.container}>
@@ -46,7 +95,7 @@ export default function DashboardScreen() {
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
             >
-                {/* Header - matches web: text-3xl font-bold mb-2, text-muted-foreground mb-8 */}
+                {/* Header */}
                 <View style={styles.header}>
                     <Text style={styles.title}>Dashboard</Text>
                     <Text style={styles.subtitle}>
@@ -54,9 +103,8 @@ export default function DashboardScreen() {
                     </Text>
                 </View>
 
-                {/* Quick Stats - matches web: grid gap-4 md:grid-cols-4 mb-8 */}
+                {/* Quick Stats */}
                 <View style={styles.statsGrid}>
-                    {/* Total Analyzed */}
                     <Card style={styles.statCard}>
                         <CardHeader style={styles.statHeader}>
                             <Text style={styles.statLabel}>Total Analyzed</Text>
@@ -67,7 +115,6 @@ export default function DashboardScreen() {
                         </CardContent>
                     </Card>
 
-                    {/* Accuracy */}
                     <Card style={styles.statCard}>
                         <CardHeader style={styles.statHeader}>
                             <Text style={styles.statLabel}>Accuracy</Text>
@@ -78,7 +125,6 @@ export default function DashboardScreen() {
                         </CardContent>
                     </Card>
 
-                    {/* Day Streak */}
                     <Card style={styles.statCard}>
                         <CardHeader style={styles.statHeader}>
                             <Text style={styles.statLabel}>Day Streak</Text>
@@ -89,7 +135,6 @@ export default function DashboardScreen() {
                         </CardContent>
                     </Card>
 
-                    {/* Level */}
                     <Card style={styles.statCard}>
                         <CardHeader style={styles.statHeader}>
                             <Text style={styles.statLabel}>Level</Text>
@@ -101,9 +146,9 @@ export default function DashboardScreen() {
                     </Card>
                 </View>
 
-                {/* Feature Cards - matches web: grid gap-6 md:grid-cols-3 */}
+                {/* Feature Cards */}
                 <View style={styles.featureCards}>
-                    {/* Daily Lessons Card - matches web: border-2 border-primary/20 */}
+                    {/* Daily Lessons Card */}
                     <Card variant="primary" style={styles.featureCard}>
                         <CardHeader>
                             <View style={styles.cardTitleRow}>
@@ -111,21 +156,21 @@ export default function DashboardScreen() {
                                     <Ionicons name="book" size={20} color={colors.primary} />
                                     <CardTitle style={styles.cardTitleText}>Daily Lessons</CardTitle>
                                 </View>
-                                {todayLesson.already_completed && (
+                                {todayLesson?.already_completed && (
                                     <Ionicons name="checkmark-circle" size={20} color={colors.success} />
                                 )}
                             </View>
                             <CardDescription>
-                                {todayLesson.title}
+                                {todayLesson?.lesson?.title || "Complete daily micro-lessons"}
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
                             <Text style={styles.mutedText}>
-                                {lessonProgress.lessons_completed} lessons completed
+                                {lessonProgress?.lessons_completed || 0} lessons completed
                             </Text>
                             <Button fullWidth style={styles.cardButton}>
                                 <Text style={styles.buttonText}>
-                                    {todayLesson.already_completed ? "View Lessons" : "Start Today's Lesson"}
+                                    {todayLesson?.already_completed ? "View Lessons" : "Start Today's Lesson"}
                                 </Text>
                                 <Ionicons name="arrow-forward" size={16} color={colors.primaryForeground} />
                             </Button>
@@ -139,9 +184,7 @@ export default function DashboardScreen() {
                                 <Ionicons name="mail" size={20} color={colors.foreground} />
                                 <CardTitle style={styles.cardTitleText}>Gmail Integration</CardTitle>
                             </View>
-                            <CardDescription>
-                                Scan your inbox for phishing threats
-                            </CardDescription>
+                            <CardDescription>Scan your inbox for phishing threats</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <View style={styles.statusRow}>
@@ -174,26 +217,24 @@ export default function DashboardScreen() {
                         </CardContent>
                     </Card>
 
-                    {/* Progress & Stats Card */}
+                    {/* Progress Card */}
                     <Card style={styles.featureCard}>
                         <CardHeader>
                             <View style={styles.titleWithIcon}>
                                 <Ionicons name="flame" size={20} color={colors.orange} />
                                 <CardTitle style={styles.cardTitleText}>Progress & Stats</CardTitle>
                             </View>
-                            <CardDescription>
-                                Track your learning journey
-                            </CardDescription>
+                            <CardDescription>Track your learning journey</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <View style={styles.progressStats}>
                                 <View style={styles.progressItem}>
                                     <Text style={styles.progressLabel}>XP: </Text>
-                                    <Text style={styles.progressValue}>{lessonProgress.xp_total}</Text>
+                                    <Text style={styles.progressValue}>{lessonProgress?.xp_total || 0}</Text>
                                 </View>
                                 <View style={styles.progressItem}>
                                     <Text style={styles.progressLabel}>Best: </Text>
-                                    <Text style={styles.progressValue}>{lessonProgress.streak_best} days</Text>
+                                    <Text style={styles.progressValue}>{lessonProgress?.streak_best || 0} days</Text>
                                 </View>
                             </View>
                             <Button variant="outline" fullWidth style={styles.cardButton}>
@@ -204,7 +245,7 @@ export default function DashboardScreen() {
                     </Card>
                 </View>
 
-                {/* Weak Spots Alert - matches web: mt-8 */}
+                {/* Weak Spots */}
                 {weakSpots.length > 0 && (
                     <Card style={styles.weakSpotsCard}>
                         <CardHeader>
@@ -215,9 +256,9 @@ export default function DashboardScreen() {
                         </CardHeader>
                         <CardContent>
                             <View style={styles.badgeRow}>
-                                {weakSpots.map((spot, i) => (
+                                {weakSpots.slice(0, 3).map((spot: string, i: number) => (
                                     <View key={i} style={styles.weakSpotBadge}>
-                                        <Text style={styles.weakSpotText}>{spot}</Text>
+                                        <Text style={styles.weakSpotText}>{spot.replace("_", " ")}</Text>
                                     </View>
                                 ))}
                             </View>
@@ -234,6 +275,16 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: colors.background,
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        gap: spacing[4],
+    },
+    loadingText: {
+        fontSize: fontSize.base,
+        color: colors.mutedForeground,
     },
     scrollView: {
         flex: 1,
@@ -257,7 +308,6 @@ const styles = StyleSheet.create({
         color: colors.mutedForeground,
         lineHeight: fontSize.base * 1.5,
     },
-    // Stats Grid - 2x2 on mobile
     statsGrid: {
         flexDirection: "row",
         flexWrap: "wrap",
@@ -286,7 +336,6 @@ const styles = StyleSheet.create({
         fontWeight: fontWeight.bold,
         color: colors.foreground,
     },
-    // Feature Cards
     featureCards: {
         gap: spacing[6],
     },
@@ -353,7 +402,6 @@ const styles = StyleSheet.create({
         fontWeight: fontWeight.medium,
         color: colors.foreground,
     },
-    // Weak Spots
     weakSpotsCard: {
         marginTop: spacing[8],
     },
@@ -364,19 +412,19 @@ const styles = StyleSheet.create({
         marginBottom: spacing[4],
     },
     weakSpotBadge: {
-        backgroundColor: colors.warningLight,
+        backgroundColor: "rgba(234, 179, 8, 0.15)",
         paddingVertical: spacing[1],
         paddingHorizontal: spacing[3],
         borderRadius: radius.full,
     },
     weakSpotText: {
         fontSize: fontSize.sm,
-        color: "#a16207", // Tailwind yellow-700
+        color: "#a16207",
         textTransform: "capitalize",
     },
     linkText: {
         fontSize: fontSize.sm,
-        color: colors.primary,
+        color: colors.foreground,
         fontWeight: fontWeight.medium,
     },
 });

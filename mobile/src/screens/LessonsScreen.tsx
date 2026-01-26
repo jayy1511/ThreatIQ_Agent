@@ -1,33 +1,66 @@
 /**
- * Lessons Screen - Matches web lessons layout
+ * Lessons Screen - With real API integration
  */
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
     View,
     Text,
     ScrollView,
     StyleSheet,
     SafeAreaView,
+    ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Card, CardHeader, CardContent, CardTitle, CardDescription, Button } from "../components/ui";
 import { colors, spacing, radius, fontSize, fontWeight } from "../theme";
+import { useAuth } from "../context/AuthContext";
+import { getTodayLesson, getRecentLessons, getLessonProgress } from "../lib/api";
+
+interface LessonData {
+    lesson: {
+        lesson_id: string;
+        title: string;
+        topic: string;
+        content: string[];
+    };
+    date: string;
+    already_completed: boolean;
+}
 
 export default function LessonsScreen() {
-    // Placeholder data
-    const todayLesson = {
-        lesson_id: "lesson_1",
-        title: "Spotting Phishing Links",
-        topic: "links",
-        already_completed: false,
-    };
+    const { user } = useAuth();
+    const [loading, setLoading] = useState(true);
+    const [todayLesson, setTodayLesson] = useState<LessonData | null>(null);
+    const [recentLessons, setRecentLessons] = useState<any[]>([]);
+    const [lessonsCompleted, setLessonsCompleted] = useState(0);
 
-    const recentLessons = [
-        { id: "1", title: "Creating Strong Passwords", topic: "passwords", score: 100 },
-        { id: "2", title: "Two-Factor Authentication", topic: "2fa", score: 85 },
-        { id: "3", title: "Email Attachments", topic: "attachments", score: 67 },
-    ];
+    useEffect(() => {
+        loadData();
+    }, [user]);
+
+    const loadData = async () => {
+        if (!user) {
+            setLoading(false);
+            return;
+        }
+
+        try {
+            const [lessonData, recentData, progressData] = await Promise.all([
+                getTodayLesson().catch(() => null),
+                getRecentLessons(5).catch(() => ({ completions: [] })),
+                getLessonProgress().catch(() => null),
+            ]);
+
+            setTodayLesson(lessonData);
+            setRecentLessons(recentData?.completions || []);
+            setLessonsCompleted(progressData?.lessons_completed || 0);
+        } catch (error) {
+            console.error("[Lessons] Error loading data:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const getTopicColor = (topic: string) => {
         const topicColors: Record<string, string> = {
@@ -35,9 +68,21 @@ export default function LessonsScreen() {
             "2fa": colors.blue,
             links: colors.destructive,
             attachments: colors.orange,
+            social_engineering: colors.warning,
         };
         return topicColors[topic] || colors.primary;
     };
+
+    if (loading) {
+        return (
+            <SafeAreaView style={styles.container}>
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color={colors.primary} />
+                    <Text style={styles.loadingText}>Loading lessons...</Text>
+                </View>
+            </SafeAreaView>
+        );
+    }
 
     return (
         <SafeAreaView style={styles.container}>
@@ -55,69 +100,90 @@ export default function LessonsScreen() {
                 </View>
 
                 {/* Today's Lesson Card */}
-                <Card variant="primary" style={styles.todayCard}>
-                    <CardHeader>
-                        <View style={styles.cardTitleRow}>
-                            <View style={styles.titleWithIcon}>
-                                <Ionicons name="book" size={20} color={colors.primary} />
-                                <CardTitle style={styles.cardTitleText}>Today's Lesson</CardTitle>
+                {todayLesson ? (
+                    <Card variant="primary" style={styles.todayCard}>
+                        <CardHeader>
+                            <View style={styles.cardTitleRow}>
+                                <View style={styles.titleWithIcon}>
+                                    <Ionicons name="book" size={20} color={colors.primary} />
+                                    <CardTitle style={styles.cardTitleText}>Today's Lesson</CardTitle>
+                                </View>
+                                {todayLesson.already_completed && (
+                                    <Ionicons name="checkmark-circle" size={20} color={colors.success} />
+                                )}
                             </View>
-                            {todayLesson.already_completed && (
-                                <Ionicons name="checkmark-circle" size={20} color={colors.success} />
-                            )}
-                        </View>
-                    </CardHeader>
-                    <CardContent>
-                        <Text style={styles.lessonTitle}>{todayLesson.title}</Text>
-                        <View style={styles.topicRow}>
-                            <View style={[styles.topicBadge, { backgroundColor: `${getTopicColor(todayLesson.topic)}15` }]}>
-                                <Text style={[styles.topicText, { color: getTopicColor(todayLesson.topic) }]}>
-                                    {todayLesson.topic}
+                        </CardHeader>
+                        <CardContent>
+                            <Text style={styles.lessonTitle}>{todayLesson.lesson.title}</Text>
+                            <View style={styles.topicRow}>
+                                <View style={[styles.topicBadge, { backgroundColor: `${getTopicColor(todayLesson.lesson.topic)}15` }]}>
+                                    <Text style={[styles.topicText, { color: getTopicColor(todayLesson.lesson.topic) }]}>
+                                        {todayLesson.lesson.topic}
+                                    </Text>
+                                </View>
+                                <Text style={styles.duration}>~3 min</Text>
+                            </View>
+                            <Button fullWidth style={styles.startButton}>
+                                <Text style={styles.buttonText}>
+                                    {todayLesson.already_completed ? "Review Lesson" : "Start Lesson"}
                                 </Text>
-                            </View>
-                            <Text style={styles.duration}>~3 min</Text>
-                        </View>
-                        <Button fullWidth style={styles.startButton}>
-                            <Text style={styles.buttonText}>
-                                {todayLesson.already_completed ? "Review Lesson" : "Start Lesson"}
-                            </Text>
-                        </Button>
-                    </CardContent>
-                </Card>
+                            </Button>
+                        </CardContent>
+                    </Card>
+                ) : (
+                    <Card style={styles.noLessonCard}>
+                        <CardContent style={styles.noLessonContent}>
+                            <Ionicons name="book-outline" size={48} color={colors.mutedForeground} />
+                            <Text style={styles.noLessonText}>No lesson available</Text>
+                            <Text style={styles.noLessonSubtext}>Check back tomorrow!</Text>
+                        </CardContent>
+                    </Card>
+                )}
 
                 {/* Recent Lessons */}
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Recent Lessons</Text>
-                    {recentLessons.map((lesson) => (
-                        <Card key={lesson.id} style={styles.lessonCard}>
-                            <CardContent style={styles.lessonCardContent}>
-                                <View style={styles.lessonInfo}>
-                                    <Text style={styles.lessonCardTitle}>{lesson.title}</Text>
-                                    <View style={[styles.topicBadge, { backgroundColor: `${getTopicColor(lesson.topic)}15` }]}>
-                                        <Text style={[styles.topicText, { color: getTopicColor(lesson.topic) }]}>
-                                            {lesson.topic}
-                                        </Text>
+                    {recentLessons.length > 0 ? (
+                        recentLessons.map((lesson, idx) => (
+                            <Card key={idx} style={styles.lessonCard}>
+                                <CardContent style={styles.lessonCardContent}>
+                                    <View style={styles.lessonInfo}>
+                                        <Text style={styles.lessonCardTitle}>{lesson.lesson_title || lesson.lesson_id}</Text>
+                                        <View style={[styles.topicBadge, { backgroundColor: `${getTopicColor(lesson.lesson_topic || "general")}15` }]}>
+                                            <Text style={[styles.topicText, { color: getTopicColor(lesson.lesson_topic || "general") }]}>
+                                                {lesson.lesson_topic || "general"}
+                                            </Text>
+                                        </View>
                                     </View>
-                                </View>
-                                <View style={styles.scoreContainer}>
-                                    <Text style={[
-                                        styles.scoreText,
-                                        { color: lesson.score >= 80 ? colors.success : lesson.score >= 60 ? colors.warning : colors.destructive }
-                                    ]}>
-                                        {lesson.score}%
-                                    </Text>
-                                    <Ionicons name="chevron-forward" size={16} color={colors.mutedForeground} />
-                                </View>
+                                    <View style={styles.scoreContainer}>
+                                        <Text style={[
+                                            styles.scoreText,
+                                            { color: lesson.score_percent >= 80 ? colors.success : lesson.score_percent >= 60 ? colors.warning : colors.destructive }
+                                        ]}>
+                                            {lesson.score_percent || 0}%
+                                        </Text>
+                                        <Ionicons name="chevron-forward" size={16} color={colors.mutedForeground} />
+                                    </View>
+                                </CardContent>
+                            </Card>
+                        ))
+                    ) : (
+                        <Card style={styles.emptyCard}>
+                            <CardContent style={styles.emptyContent}>
+                                <Text style={styles.emptyText}>No lessons completed yet</Text>
+                                <Text style={styles.emptySubtext}>Start your first lesson above!</Text>
                             </CardContent>
                         </Card>
-                    ))}
+                    )}
                 </View>
 
-                {/* All Lessons Link */}
-                <Button variant="outline" fullWidth>
-                    <Text style={styles.outlineButtonText}>View All Lessons</Text>
-                    <Ionicons name="arrow-forward" size={16} color={colors.foreground} />
-                </Button>
+                {/* Stats */}
+                <View style={styles.statsRow}>
+                    <View style={styles.statItem}>
+                        <Text style={styles.statValue}>{lessonsCompleted}</Text>
+                        <Text style={styles.statLabel}>Completed</Text>
+                    </View>
+                </View>
             </ScrollView>
         </SafeAreaView>
     );
@@ -127,6 +193,16 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: colors.background,
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        gap: spacing[4],
+    },
+    loadingText: {
+        fontSize: fontSize.base,
+        color: colors.mutedForeground,
     },
     scrollView: {
         flex: 1,
@@ -201,6 +277,24 @@ const styles = StyleSheet.create({
         fontWeight: fontWeight.medium,
         fontSize: fontSize.sm,
     },
+    noLessonCard: {
+        marginBottom: spacing[6],
+    },
+    noLessonContent: {
+        alignItems: "center",
+        paddingVertical: spacing[8],
+    },
+    noLessonText: {
+        fontSize: fontSize.lg,
+        fontWeight: fontWeight.medium,
+        color: colors.foreground,
+        marginTop: spacing[4],
+    },
+    noLessonSubtext: {
+        fontSize: fontSize.sm,
+        color: colors.mutedForeground,
+        marginTop: spacing[1],
+    },
     section: {
         marginBottom: spacing[6],
     },
@@ -237,9 +331,37 @@ const styles = StyleSheet.create({
         fontSize: fontSize.sm,
         fontWeight: fontWeight.semibold,
     },
-    outlineButtonText: {
-        color: colors.foreground,
-        fontWeight: fontWeight.medium,
+    emptyCard: {
+        marginBottom: spacing[3],
+    },
+    emptyContent: {
+        alignItems: "center",
+        paddingVertical: spacing[6],
+    },
+    emptyText: {
         fontSize: fontSize.sm,
+        color: colors.mutedForeground,
+    },
+    emptySubtext: {
+        fontSize: fontSize.xs,
+        color: colors.mutedForeground,
+        marginTop: spacing[1],
+    },
+    statsRow: {
+        flexDirection: "row",
+        justifyContent: "center",
+        gap: spacing[8],
+    },
+    statItem: {
+        alignItems: "center",
+    },
+    statValue: {
+        fontSize: fontSize["2xl"],
+        fontWeight: fontWeight.bold,
+        color: colors.foreground,
+    },
+    statLabel: {
+        fontSize: fontSize.sm,
+        color: colors.mutedForeground,
     },
 });

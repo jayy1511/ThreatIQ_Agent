@@ -1,5 +1,6 @@
 /**
  * Button Component - Matches shadcn/ui Button exactly
+ * Primary color is BLACK in light theme!
  */
 
 import React from "react";
@@ -74,13 +75,14 @@ export function Button({
     );
 }
 
+// PRIMARY IS BLACK (#171717) - matching web!
 const variantStyles: Record<string, { container: ViewStyle; text: TextStyle }> = {
     default: {
         container: {
-            backgroundColor: colors.primary,
+            backgroundColor: colors.primary,  // BLACK
         },
         text: {
-            color: colors.primaryForeground,
+            color: colors.primaryForeground,  // WHITE
         },
     },
     secondary: {
@@ -124,7 +126,8 @@ const variantStyles: Record<string, { container: ViewStyle; text: TextStyle }> =
             paddingVertical: 0,
         },
         text: {
-            color: colors.primary,
+            color: colors.foreground,
+            textDecorationLine: "underline",
         },
     },
 };

@@ -1,44 +1,89 @@
 /**
- * Progress Screen - Matches web progress/stats layout
+ * Progress Screen - With real API integration
  */
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
     View,
     Text,
     ScrollView,
     StyleSheet,
     SafeAreaView,
+    ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "../components/ui";
+import { Card, CardHeader, CardContent, CardTitle } from "../components/ui";
 import { colors, spacing, radius, fontSize, fontWeight } from "../theme";
+import { useAuth } from "../context/AuthContext";
+import { getLessonProgress, getUserSummary } from "../lib/api";
+
+interface ProgressData {
+    xp_total: number;
+    level: number;
+    streak_current: number;
+    streak_best: number;
+    lessons_completed: number;
+    last_7_days?: { date: string; completed: boolean }[];
+}
 
 export default function ProgressScreen() {
-    // Placeholder data
-    const progress = {
-        xp_total: 250,
-        level: 3,
-        streak_current: 7,
-        streak_best: 14,
-        lessons_completed: 12,
+    const { user } = useAuth();
+    const [loading, setLoading] = useState(true);
+    const [progress, setProgress] = useState<ProgressData | null>(null);
+    const [summary, setSummary] = useState<any>(null);
+
+    useEffect(() => {
+        loadData();
+    }, [user]);
+
+    const loadData = async () => {
+        if (!user) {
+            setLoading(false);
+            return;
+        }
+
+        try {
+            const [progressData, summaryData] = await Promise.all([
+                getLessonProgress().catch(() => null),
+                getUserSummary(user.uid).catch(() => null),
+            ]);
+
+            setProgress(progressData);
+            setSummary(summaryData);
+        } catch (error) {
+            console.error("[Progress] Error loading data:", error);
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const stats = {
-        totalAnalyzed: 42,
-        accuracy: 85,
-        categoriesSeen: 6,
+    // Generate last 7 days for streak visualization
+    const getLast7Days = () => {
+        if (progress?.last_7_days) return progress.last_7_days;
+
+        const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+        const today = new Date().getDay();
+        return days.map((day, idx) => ({
+            day,
+            completed: idx <= (progress?.streak_current || 0) - 1,
+        }));
     };
 
-    const last7Days = [
-        { day: "Mon", completed: true },
-        { day: "Tue", completed: true },
-        { day: "Wed", completed: true },
-        { day: "Thu", completed: false },
-        { day: "Fri", completed: true },
-        { day: "Sat", completed: true },
-        { day: "Sun", completed: true },
-    ];
+    if (loading) {
+        return (
+            <SafeAreaView style={styles.container}>
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color={colors.primary} />
+                    <Text style={styles.loadingText}>Loading progress...</Text>
+                </View>
+            </SafeAreaView>
+        );
+    }
+
+    const xpTotal = progress?.xp_total || 0;
+    const level = progress?.level || 1;
+    const xpForNextLevel = level * 100;
+    const xpProgress = (xpTotal % 100) / 100;
 
     return (
         <SafeAreaView style={styles.container}>
@@ -60,18 +105,18 @@ export default function ProgressScreen() {
                     <CardContent style={styles.xpContent}>
                         <View style={styles.xpMain}>
                             <View style={styles.levelBadge}>
-                                <Text style={styles.levelText}>Lv. {progress.level}</Text>
+                                <Text style={styles.levelText}>Lv. {level}</Text>
                             </View>
                             <View style={styles.xpInfo}>
-                                <Text style={styles.xpValue}>{progress.xp_total} XP</Text>
+                                <Text style={styles.xpValue}>{xpTotal} XP</Text>
                                 <Text style={styles.xpLabel}>Total Experience</Text>
                             </View>
                         </View>
                         <View style={styles.xpProgress}>
                             <View style={styles.progressBar}>
-                                <View style={[styles.progressFill, { width: "50%" }]} />
+                                <View style={[styles.progressFill, { width: `${xpProgress * 100}%` }]} />
                             </View>
-                            <Text style={styles.progressText}>50 XP to next level</Text>
+                            <Text style={styles.progressText}>{100 - (xpTotal % 100)} XP to next level</Text>
                         </View>
                     </CardContent>
                 </Card>
@@ -86,13 +131,13 @@ export default function ProgressScreen() {
                     </CardHeader>
                     <CardContent>
                         <View style={styles.streakMain}>
-                            <Text style={styles.streakValue}>{progress.streak_current}</Text>
+                            <Text style={styles.streakValue}>{progress?.streak_current || 0}</Text>
                             <Text style={styles.streakLabel}>days</Text>
                         </View>
 
                         {/* 7-day visualization */}
                         <View style={styles.weekView}>
-                            {last7Days.map((day, idx) => (
+                            {getLast7Days().map((day: any, idx: number) => (
                                 <View key={idx} style={styles.dayColumn}>
                                     <View style={[
                                         styles.dayCircle,
@@ -102,14 +147,14 @@ export default function ProgressScreen() {
                                             <Ionicons name="checkmark" size={14} color={colors.primaryForeground} />
                                         )}
                                     </View>
-                                    <Text style={styles.dayLabel}>{day.day}</Text>
+                                    <Text style={styles.dayLabel}>{day.day || ""}</Text>
                                 </View>
                             ))}
                         </View>
 
                         <View style={styles.bestStreak}>
                             <Ionicons name="trophy" size={16} color={colors.warning} />
-                            <Text style={styles.bestStreakText}>Best: {progress.streak_best} days</Text>
+                            <Text style={styles.bestStreakText}>Best: {progress?.streak_best || 0} days</Text>
                         </View>
                     </CardContent>
                 </Card>
@@ -120,28 +165,28 @@ export default function ProgressScreen() {
                     <Card style={styles.statCard}>
                         <CardContent style={styles.statContent}>
                             <Ionicons name="shield-checkmark" size={24} color={colors.primary} />
-                            <Text style={styles.statValue}>{stats.totalAnalyzed}</Text>
+                            <Text style={styles.statValue}>{summary?.total_analyzed || 0}</Text>
                             <Text style={styles.statLabel}>Messages Analyzed</Text>
                         </CardContent>
                     </Card>
                     <Card style={styles.statCard}>
                         <CardContent style={styles.statContent}>
                             <Ionicons name="analytics" size={24} color={colors.success} />
-                            <Text style={styles.statValue}>{stats.accuracy}%</Text>
+                            <Text style={styles.statValue}>{summary?.accuracy || 0}%</Text>
                             <Text style={styles.statLabel}>Accuracy Rate</Text>
                         </CardContent>
                     </Card>
                     <Card style={styles.statCard}>
                         <CardContent style={styles.statContent}>
                             <Ionicons name="layers" size={24} color={colors.purple} />
-                            <Text style={styles.statValue}>{stats.categoriesSeen}</Text>
+                            <Text style={styles.statValue}>{summary?.categories_seen || 0}</Text>
                             <Text style={styles.statLabel}>Categories Seen</Text>
                         </CardContent>
                     </Card>
                     <Card style={styles.statCard}>
                         <CardContent style={styles.statContent}>
                             <Ionicons name="book" size={24} color={colors.blue} />
-                            <Text style={styles.statValue}>{progress.lessons_completed}</Text>
+                            <Text style={styles.statValue}>{progress?.lessons_completed || 0}</Text>
                             <Text style={styles.statLabel}>Lessons Done</Text>
                         </CardContent>
                     </Card>
@@ -155,6 +200,16 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: colors.background,
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        gap: spacing[4],
+    },
+    loadingText: {
+        fontSize: fontSize.base,
+        color: colors.mutedForeground,
     },
     scrollView: {
         flex: 1,
