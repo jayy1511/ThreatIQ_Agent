@@ -1,6 +1,5 @@
 /**
- * Button Component
- * Matches shadcn Button styling for mobile
+ * Button Component - Matches shadcn/ui Button exactly
  */
 
 import React from "react";
@@ -11,19 +10,20 @@ import {
     ViewStyle,
     TextStyle,
     ActivityIndicator,
+    View,
 } from "react-native";
-import { Colors, BorderRadius, Spacing, FontSizes } from "../../config";
+import { colors, spacing, radius, fontSize, fontWeight } from "../../theme";
 
 interface ButtonProps {
     children: React.ReactNode;
     onPress?: () => void;
-    variant?: "default" | "secondary" | "outline" | "ghost" | "destructive";
-    size?: "default" | "sm" | "lg";
+    variant?: "default" | "secondary" | "outline" | "ghost" | "destructive" | "link";
+    size?: "default" | "sm" | "lg" | "icon";
     disabled?: boolean;
     loading?: boolean;
     style?: ViewStyle;
     textStyle?: TextStyle;
-    icon?: React.ReactNode;
+    fullWidth?: boolean;
 }
 
 export function Button({
@@ -35,140 +35,164 @@ export function Button({
     loading = false,
     style,
     textStyle,
-    icon,
+    fullWidth = false,
 }: ButtonProps) {
-    const variantStyles = getVariantStyles(variant, disabled);
-    const sizeStyles = getSizeStyles(size);
+    const containerStyles = [
+        styles.base,
+        variantStyles[variant].container,
+        sizeStyles[size].container,
+        fullWidth && styles.fullWidth,
+        disabled && styles.disabled,
+        style,
+    ];
+
+    const textStyles = [
+        styles.text,
+        variantStyles[variant].text,
+        sizeStyles[size].text,
+        textStyle,
+    ];
 
     return (
         <TouchableOpacity
             onPress={onPress}
             disabled={disabled || loading}
-            style={[
-                styles.button,
-                variantStyles.container,
-                sizeStyles.container,
-                style,
-            ]}
+            style={containerStyles}
             activeOpacity={0.7}
         >
             {loading ? (
                 <ActivityIndicator
                     size="small"
-                    color={variantStyles.text.color}
+                    color={variantStyles[variant].text.color}
                 />
+            ) : typeof children === "string" ? (
+                <Text style={textStyles}>{children}</Text>
             ) : (
-                <>
-                    {icon}
-                    <Text style={[styles.text, variantStyles.text, sizeStyles.text, textStyle]}>
-                        {children}
-                    </Text>
-                </>
+                <View style={styles.content}>{children}</View>
             )}
         </TouchableOpacity>
     );
 }
 
-function getVariantStyles(variant: string, disabled: boolean) {
-    const opacity = disabled ? 0.5 : 1;
+const variantStyles: Record<string, { container: ViewStyle; text: TextStyle }> = {
+    default: {
+        container: {
+            backgroundColor: colors.primary,
+        },
+        text: {
+            color: colors.primaryForeground,
+        },
+    },
+    secondary: {
+        container: {
+            backgroundColor: colors.secondary,
+        },
+        text: {
+            color: colors.secondaryForeground,
+        },
+    },
+    outline: {
+        container: {
+            backgroundColor: "transparent",
+            borderWidth: 1,
+            borderColor: colors.border,
+        },
+        text: {
+            color: colors.foreground,
+        },
+    },
+    ghost: {
+        container: {
+            backgroundColor: "transparent",
+        },
+        text: {
+            color: colors.foreground,
+        },
+    },
+    destructive: {
+        container: {
+            backgroundColor: colors.destructive,
+        },
+        text: {
+            color: colors.destructiveForeground,
+        },
+    },
+    link: {
+        container: {
+            backgroundColor: "transparent",
+            paddingHorizontal: 0,
+            paddingVertical: 0,
+        },
+        text: {
+            color: colors.primary,
+        },
+    },
+};
 
-    const variants: Record<string, { container: ViewStyle; text: TextStyle }> = {
-        default: {
-            container: {
-                backgroundColor: Colors.primary,
-                opacity,
-            },
-            text: {
-                color: Colors.primaryForeground,
-            },
+const sizeStyles: Record<string, { container: ViewStyle; text: TextStyle }> = {
+    default: {
+        container: {
+            paddingVertical: spacing[2.5],
+            paddingHorizontal: spacing[4],
+            height: 40,
         },
-        secondary: {
-            container: {
-                backgroundColor: Colors.secondary,
-                opacity,
-            },
-            text: {
-                color: Colors.secondaryForeground,
-            },
+        text: {
+            fontSize: fontSize.sm,
         },
-        outline: {
-            container: {
-                backgroundColor: "transparent",
-                borderWidth: 1,
-                borderColor: Colors.border,
-                opacity,
-            },
-            text: {
-                color: Colors.foreground,
-            },
+    },
+    sm: {
+        container: {
+            paddingVertical: spacing[2],
+            paddingHorizontal: spacing[3],
+            height: 36,
         },
-        ghost: {
-            container: {
-                backgroundColor: "transparent",
-                opacity,
-            },
-            text: {
-                color: Colors.foreground,
-            },
+        text: {
+            fontSize: fontSize.sm,
         },
-        destructive: {
-            container: {
-                backgroundColor: Colors.destructive,
-                opacity,
-            },
-            text: {
-                color: Colors.destructiveForeground,
-            },
+    },
+    lg: {
+        container: {
+            paddingVertical: spacing[3],
+            paddingHorizontal: spacing[6],
+            height: 44,
         },
-    };
-
-    return variants[variant] || variants.default;
-}
-
-function getSizeStyles(size: string) {
-    const sizes: Record<string, { container: ViewStyle; text: TextStyle }> = {
-        sm: {
-            container: {
-                paddingVertical: Spacing.sm,
-                paddingHorizontal: Spacing.md,
-            },
-            text: {
-                fontSize: FontSizes.sm,
-            },
+        text: {
+            fontSize: fontSize.base,
         },
-        default: {
-            container: {
-                paddingVertical: Spacing.md,
-                paddingHorizontal: Spacing.lg,
-            },
-            text: {
-                fontSize: FontSizes.base,
-            },
+    },
+    icon: {
+        container: {
+            padding: spacing[2],
+            height: 40,
+            width: 40,
         },
-        lg: {
-            container: {
-                paddingVertical: Spacing.lg,
-                paddingHorizontal: Spacing.xl,
-            },
-            text: {
-                fontSize: FontSizes.lg,
-            },
+        text: {
+            fontSize: fontSize.sm,
         },
-    };
-
-    return sizes[size] || sizes.default;
-}
+    },
+};
 
 const styles = StyleSheet.create({
-    button: {
-        borderRadius: BorderRadius.md,
+    base: {
+        borderRadius: radius.md,
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "center",
-        gap: Spacing.sm,
     },
     text: {
-        fontWeight: "600",
+        fontWeight: fontWeight.medium,
         textAlign: "center",
+    },
+    content: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: spacing[2],
+    },
+    fullWidth: {
+        width: "100%",
+    },
+    disabled: {
+        opacity: 0.5,
     },
 });

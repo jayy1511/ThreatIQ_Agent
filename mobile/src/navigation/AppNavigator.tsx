@@ -1,6 +1,6 @@
 /**
  * App Navigation Setup
- * Bottom tab navigator with 5 screens
+ * Bottom tab navigator with 5 screens matching web
  */
 
 import React from "react";
@@ -15,7 +15,7 @@ import {
     ProgressScreen,
     GmailScreen,
 } from "../screens";
-import { Colors } from "../config";
+import { colors } from "../theme";
 
 // Tab param list type
 export type TabParamList = {
@@ -29,7 +29,7 @@ export type TabParamList = {
 const Tab = createBottomTabNavigator<TabParamList>();
 
 // Icon mapping
-function getTabIcon(routeName: string, focused: boolean) {
+function getTabIcon(routeName: string, focused: boolean): keyof typeof Ionicons.glyphMap {
     const iconMap: Record<string, { active: keyof typeof Ionicons.glyphMap; inactive: keyof typeof Ionicons.glyphMap }> = {
         Dashboard: { active: "home", inactive: "home-outline" },
         Analyze: { active: "search", inactive: "search-outline" },
@@ -51,11 +51,11 @@ export default function AppNavigator() {
                         const iconName = getTabIcon(route.name, focused);
                         return <Ionicons name={iconName} size={size} color={color} />;
                     },
-                    tabBarActiveTintColor: Colors.primary,
-                    tabBarInactiveTintColor: Colors.mutedForeground,
+                    tabBarActiveTintColor: colors.primary,
+                    tabBarInactiveTintColor: colors.mutedForeground,
                     tabBarStyle: {
-                        backgroundColor: Colors.background,
-                        borderTopColor: Colors.border,
+                        backgroundColor: colors.background,
+                        borderTopColor: colors.border,
                         borderTopWidth: 1,
                         paddingTop: 8,
                         paddingBottom: 8,

@@ -1,114 +1,106 @@
 /**
- * Card Component
- * Matches shadcn Card styling for mobile
+ * Card Component - Matches shadcn/ui Card exactly
  */
 
 import React from "react";
-import { View, StyleSheet, ViewProps, ViewStyle } from "react-native";
-import { Colors, BorderRadius, Spacing } from "../../config";
+import { View, Text, StyleSheet, ViewStyle, TextStyle } from "react-native";
+import { colors, spacing, radius, fontSize, fontWeight } from "../../theme";
 
-interface CardProps extends ViewProps {
+interface CardProps {
     children: React.ReactNode;
-    variant?: "default" | "outline" | "elevated" | "primary";
+    variant?: "default" | "primary" | "bordered";
     style?: ViewStyle;
 }
 
-export function Card({ children, variant = "default", style, ...props }: CardProps) {
-    const variantStyles: ViewStyle = {
-        default: {
-            backgroundColor: Colors.card,
-            borderWidth: 1,
-            borderColor: Colors.border,
-        },
-        outline: {
-            backgroundColor: "transparent",
-            borderWidth: 1,
-            borderColor: Colors.border,
-        },
-        elevated: {
-            backgroundColor: Colors.card,
-            shadowColor: "#000",
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.1,
-            shadowRadius: 4,
-            elevation: 3,
-        },
-        primary: {
-            backgroundColor: Colors.card,
-            borderWidth: 2,
-            borderColor: `${Colors.primary}33`, // 20% opacity
-        },
+export function Card({ children, variant = "default", style }: CardProps) {
+    const variantStyle = {
+        default: styles.cardDefault,
+        primary: styles.cardPrimary,
+        bordered: styles.cardBordered,
     }[variant];
 
-    return (
-        <View style={[styles.card, variantStyles, style]} {...props}>
-            {children}
-        </View>
-    );
+    return <View style={[styles.card, variantStyle, style]}>{children}</View>;
 }
 
-interface CardHeaderProps extends ViewProps {
+interface CardHeaderProps {
     children: React.ReactNode;
     style?: ViewStyle;
 }
 
-export function CardHeader({ children, style, ...props }: CardHeaderProps) {
-    return (
-        <View style={[styles.cardHeader, style]} {...props}>
-            {children}
-        </View>
-    );
+export function CardHeader({ children, style }: CardHeaderProps) {
+    return <View style={[styles.cardHeader, style]}>{children}</View>;
 }
 
-interface CardContentProps extends ViewProps {
+interface CardContentProps {
     children: React.ReactNode;
     style?: ViewStyle;
 }
 
-export function CardContent({ children, style, ...props }: CardContentProps) {
-    return (
-        <View style={[styles.cardContent, style]} {...props}>
-            {children}
-        </View>
-    );
+export function CardContent({ children, style }: CardContentProps) {
+    return <View style={[styles.cardContent, style]}>{children}</View>;
 }
 
 interface CardTitleProps {
     children: React.ReactNode;
-    style?: ViewStyle;
+    style?: TextStyle;
 }
 
 export function CardTitle({ children, style }: CardTitleProps) {
-    const textStyle = {
-        fontSize: 16,
-        fontWeight: "600" as const,
-        color: Colors.foreground,
-    };
-
-    return (
-        <View style={style}>
-            {typeof children === "string" ? (
-                <View><Text style={textStyle}>{children}</Text></View>
-            ) : (
-                children
-            )}
-        </View>
-    );
+    if (typeof children === "string") {
+        return <Text style={[styles.cardTitle, style]}>{children}</Text>;
+    }
+    return <View style={[styles.cardTitleRow, style as ViewStyle]}>{children}</View>;
 }
 
-import { Text } from "react-native";
+interface CardDescriptionProps {
+    children: React.ReactNode;
+    style?: TextStyle;
+}
+
+export function CardDescription({ children, style }: CardDescriptionProps) {
+    return <Text style={[styles.cardDescription, style]}>{children}</Text>;
+}
 
 const styles = StyleSheet.create({
     card: {
-        borderRadius: BorderRadius.lg,
+        backgroundColor: colors.card,
+        borderRadius: radius.lg,
         overflow: "hidden",
     },
+    cardDefault: {
+        borderWidth: 1,
+        borderColor: colors.border,
+    },
+    cardPrimary: {
+        borderWidth: 2,
+        borderColor: "rgba(37, 99, 235, 0.2)",
+        backgroundColor: colors.card,
+    },
+    cardBordered: {
+        borderWidth: 1,
+        borderColor: colors.border,
+    },
     cardHeader: {
-        padding: Spacing.lg,
-        paddingBottom: Spacing.md,
+        padding: spacing[4],
+        paddingBottom: spacing[2],
     },
     cardContent: {
-        padding: Spacing.lg,
+        padding: spacing[4],
         paddingTop: 0,
+    },
+    cardTitle: {
+        fontSize: fontSize.base,
+        fontWeight: fontWeight.semibold,
+        color: colors.foreground,
+    },
+    cardTitleRow: {
+        flexDirection: "row",
+        alignItems: "center",
+    },
+    cardDescription: {
+        fontSize: fontSize.sm,
+        color: colors.mutedForeground,
+        marginTop: spacing[1],
+        lineHeight: fontSize.sm * 1.5,
     },
 });
