@@ -1,6 +1,5 @@
 /**
- * Dashboard Screen
- * Main hub matching web mobile layout
+ * Dashboard Screen - Matches web mobile layout exactly
  */
 
 import React from "react";
@@ -10,14 +9,13 @@ import {
     ScrollView,
     StyleSheet,
     SafeAreaView,
-    StatusBar,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { Card, CardHeader, CardContent, Button, StatPill } from "../components/ui";
-import { Colors, Spacing, FontSizes, BorderRadius } from "../config";
+import { Card, CardHeader, CardContent, CardTitle, CardDescription, Button } from "../components/ui";
+import { colors, spacing, radius, fontSize, fontWeight } from "../theme";
 
 export default function DashboardScreen() {
-    // Placeholder data - will be replaced with API calls in Part 2
+    // Placeholder data
     const stats = {
         totalAnalyzed: 42,
         accuracy: 85,
@@ -25,23 +23,30 @@ export default function DashboardScreen() {
         level: 3,
     };
 
+    const lessonProgress = {
+        xp_total: 250,
+        lessons_completed: 12,
+        streak_best: 14,
+    };
+
     const todayLesson = {
         title: "Spotting Phishing Links",
         topic: "links",
-        completed: false,
+        already_completed: false,
     };
 
     const gmailConnected = false;
 
+    const weakSpots = ["suspicious links", "attachments"];
+
     return (
         <SafeAreaView style={styles.container}>
-            <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
             <ScrollView
                 style={styles.scrollView}
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
             >
-                {/* Header */}
+                {/* Header - matches web: text-3xl font-bold mb-2, text-muted-foreground mb-8 */}
                 <View style={styles.header}>
                     <Text style={styles.title}>Dashboard</Text>
                     <Text style={styles.subtitle}>
@@ -49,140 +54,177 @@ export default function DashboardScreen() {
                     </Text>
                 </View>
 
-                {/* Quick Stats Row */}
-                <View style={styles.statsRow}>
-                    <View style={styles.statCard}>
-                        <Ionicons name="shield-checkmark" size={20} color={Colors.mutedForeground} />
-                        <Text style={styles.statValue}>{stats.totalAnalyzed}</Text>
-                        <Text style={styles.statLabel}>Analyzed</Text>
-                    </View>
-                    <View style={styles.statCard}>
-                        <Ionicons name="analytics" size={20} color={Colors.mutedForeground} />
-                        <Text style={styles.statValue}>{stats.accuracy}%</Text>
-                        <Text style={styles.statLabel}>Accuracy</Text>
-                    </View>
-                    <View style={styles.statCard}>
-                        <Ionicons name="flame" size={20} color={Colors.orange} />
-                        <Text style={[styles.statValue, { color: Colors.orange }]}>{stats.streak}</Text>
-                        <Text style={styles.statLabel}>Streak</Text>
-                    </View>
-                    <View style={styles.statCard}>
-                        <Ionicons name="trending-up" size={20} color={Colors.blue} />
-                        <Text style={[styles.statValue, { color: Colors.blue }]}>Lv.{stats.level}</Text>
-                        <Text style={styles.statLabel}>Level</Text>
-                    </View>
+                {/* Quick Stats - matches web: grid gap-4 md:grid-cols-4 mb-8 */}
+                <View style={styles.statsGrid}>
+                    {/* Total Analyzed */}
+                    <Card style={styles.statCard}>
+                        <CardHeader style={styles.statHeader}>
+                            <Text style={styles.statLabel}>Total Analyzed</Text>
+                            <Ionicons name="shield-checkmark" size={16} color={colors.mutedForeground} />
+                        </CardHeader>
+                        <CardContent style={styles.statContent}>
+                            <Text style={styles.statValue}>{stats.totalAnalyzed}</Text>
+                        </CardContent>
+                    </Card>
+
+                    {/* Accuracy */}
+                    <Card style={styles.statCard}>
+                        <CardHeader style={styles.statHeader}>
+                            <Text style={styles.statLabel}>Accuracy</Text>
+                            <Ionicons name="analytics" size={16} color={colors.mutedForeground} />
+                        </CardHeader>
+                        <CardContent style={styles.statContent}>
+                            <Text style={styles.statValue}>{stats.accuracy}%</Text>
+                        </CardContent>
+                    </Card>
+
+                    {/* Day Streak */}
+                    <Card style={styles.statCard}>
+                        <CardHeader style={styles.statHeader}>
+                            <Text style={styles.statLabel}>Day Streak</Text>
+                            <Ionicons name="flame" size={16} color={colors.orange} />
+                        </CardHeader>
+                        <CardContent style={styles.statContent}>
+                            <Text style={[styles.statValue, { color: colors.orange }]}>{stats.streak}</Text>
+                        </CardContent>
+                    </Card>
+
+                    {/* Level */}
+                    <Card style={styles.statCard}>
+                        <CardHeader style={styles.statHeader}>
+                            <Text style={styles.statLabel}>Level</Text>
+                            <Ionicons name="trending-up" size={16} color={colors.blue} />
+                        </CardHeader>
+                        <CardContent style={styles.statContent}>
+                            <Text style={[styles.statValue, { color: colors.blue }]}>Lv. {stats.level}</Text>
+                        </CardContent>
+                    </Card>
                 </View>
 
-                {/* Daily Lesson Card */}
-                <Card variant="primary" style={styles.card}>
-                    <CardHeader>
-                        <View style={styles.cardHeaderRow}>
+                {/* Feature Cards - matches web: grid gap-6 md:grid-cols-3 */}
+                <View style={styles.featureCards}>
+                    {/* Daily Lessons Card - matches web: border-2 border-primary/20 */}
+                    <Card variant="primary" style={styles.featureCard}>
+                        <CardHeader>
                             <View style={styles.cardTitleRow}>
-                                <Ionicons name="book" size={20} color={Colors.primary} />
-                                <Text style={styles.cardTitle}>Daily Lessons</Text>
+                                <View style={styles.titleWithIcon}>
+                                    <Ionicons name="book" size={20} color={colors.primary} />
+                                    <CardTitle style={styles.cardTitleText}>Daily Lessons</CardTitle>
+                                </View>
+                                {todayLesson.already_completed && (
+                                    <Ionicons name="checkmark-circle" size={20} color={colors.success} />
+                                )}
                             </View>
-                            {todayLesson.completed && (
-                                <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
-                            )}
-                        </View>
-                        <Text style={styles.cardDescription}>{todayLesson.title}</Text>
-                    </CardHeader>
-                    <CardContent>
-                        <View style={styles.lessonMeta}>
-                            <View style={styles.topicBadge}>
-                                <Text style={styles.topicText}>{todayLesson.topic}</Text>
-                            </View>
-                            <Text style={styles.lessonCount}>0 lessons completed</Text>
-                        </View>
-                        <Button onPress={() => { }} style={styles.cardButton}>
-                            {todayLesson.completed ? "View Lessons" : "Start Today's Lesson"}
-                        </Button>
-                    </CardContent>
-                </Card>
+                            <CardDescription>
+                                {todayLesson.title}
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <Text style={styles.mutedText}>
+                                {lessonProgress.lessons_completed} lessons completed
+                            </Text>
+                            <Button fullWidth style={styles.cardButton}>
+                                <Text style={styles.buttonText}>
+                                    {todayLesson.already_completed ? "View Lessons" : "Start Today's Lesson"}
+                                </Text>
+                                <Ionicons name="arrow-forward" size={16} color={colors.primaryForeground} />
+                            </Button>
+                        </CardContent>
+                    </Card>
 
-                {/* Gmail Integration Card */}
-                <Card style={styles.card}>
-                    <CardHeader>
-                        <View style={styles.cardTitleRow}>
-                            <Ionicons name="mail" size={20} color={Colors.foreground} />
-                            <Text style={styles.cardTitle}>Gmail Integration</Text>
-                        </View>
-                        <Text style={styles.cardDescription}>
-                            Scan your inbox for phishing threats
-                        </Text>
-                    </CardHeader>
-                    <CardContent>
-                        <View style={styles.gmailStatus}>
-                            {gmailConnected ? (
-                                <>
-                                    <Ionicons name="checkmark-circle" size={16} color={Colors.success} />
-                                    <Text style={[styles.statusText, { color: Colors.success }]}>Connected</Text>
-                                </>
-                            ) : (
-                                <>
-                                    <Ionicons name="close-circle" size={16} color={Colors.mutedForeground} />
-                                    <Text style={styles.statusText}>Not connected</Text>
-                                </>
-                            )}
-                        </View>
-                        <Button
-                            variant={gmailConnected ? "outline" : "default"}
-                            onPress={() => { }}
-                            style={styles.cardButton}
-                        >
-                            {gmailConnected ? "Manage Gmail" : "Connect Gmail"}
-                        </Button>
-                    </CardContent>
-                </Card>
+                    {/* Gmail Integration Card */}
+                    <Card style={styles.featureCard}>
+                        <CardHeader>
+                            <View style={styles.titleWithIcon}>
+                                <Ionicons name="mail" size={20} color={colors.foreground} />
+                                <CardTitle style={styles.cardTitleText}>Gmail Integration</CardTitle>
+                            </View>
+                            <CardDescription>
+                                Scan your inbox for phishing threats
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <View style={styles.statusRow}>
+                                {gmailConnected ? (
+                                    <>
+                                        <Ionicons name="checkmark-circle" size={16} color={colors.success} />
+                                        <Text style={[styles.statusText, { color: colors.success }]}>Connected</Text>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Ionicons name="close-circle" size={16} color={colors.mutedForeground} />
+                                        <Text style={styles.statusText}>Not connected</Text>
+                                    </>
+                                )}
+                            </View>
+                            <Button
+                                variant={gmailConnected ? "outline" : "default"}
+                                fullWidth
+                                style={styles.cardButton}
+                            >
+                                <Text style={gmailConnected ? styles.outlineButtonText : styles.buttonText}>
+                                    {gmailConnected ? "Manage Gmail" : "Connect Gmail"}
+                                </Text>
+                                <Ionicons
+                                    name="arrow-forward"
+                                    size={16}
+                                    color={gmailConnected ? colors.foreground : colors.primaryForeground}
+                                />
+                            </Button>
+                        </CardContent>
+                    </Card>
 
-                {/* Progress Card */}
-                <Card style={styles.card}>
-                    <CardHeader>
-                        <View style={styles.cardTitleRow}>
-                            <Ionicons name="flame" size={20} color={Colors.orange} />
-                            <Text style={styles.cardTitle}>Progress & Stats</Text>
-                        </View>
-                        <Text style={styles.cardDescription}>
-                            Track your learning journey
-                        </Text>
-                    </CardHeader>
-                    <CardContent>
-                        <View style={styles.progressStats}>
-                            <View style={styles.progressStat}>
-                                <Text style={styles.progressLabel}>XP:</Text>
-                                <Text style={styles.progressValue}>250</Text>
+                    {/* Progress & Stats Card */}
+                    <Card style={styles.featureCard}>
+                        <CardHeader>
+                            <View style={styles.titleWithIcon}>
+                                <Ionicons name="flame" size={20} color={colors.orange} />
+                                <CardTitle style={styles.cardTitleText}>Progress & Stats</CardTitle>
                             </View>
-                            <View style={styles.progressStat}>
-                                <Text style={styles.progressLabel}>Best:</Text>
-                                <Text style={styles.progressValue}>12 days</Text>
+                            <CardDescription>
+                                Track your learning journey
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <View style={styles.progressStats}>
+                                <View style={styles.progressItem}>
+                                    <Text style={styles.progressLabel}>XP: </Text>
+                                    <Text style={styles.progressValue}>{lessonProgress.xp_total}</Text>
+                                </View>
+                                <View style={styles.progressItem}>
+                                    <Text style={styles.progressLabel}>Best: </Text>
+                                    <Text style={styles.progressValue}>{lessonProgress.streak_best} days</Text>
+                                </View>
                             </View>
-                        </View>
-                        <Button variant="outline" onPress={() => { }} style={styles.cardButton}>
-                            View Full Stats
-                        </Button>
-                    </CardContent>
-                </Card>
+                            <Button variant="outline" fullWidth style={styles.cardButton}>
+                                <Text style={styles.outlineButtonText}>View Full Stats</Text>
+                                <Ionicons name="arrow-forward" size={16} color={colors.foreground} />
+                            </Button>
+                        </CardContent>
+                    </Card>
+                </View>
 
-                {/* Weak Spots Alert (placeholder) */}
-                <Card style={[styles.card, styles.weakSpotsCard]}>
-                    <CardHeader>
-                        <View style={styles.cardTitleRow}>
-                            <Ionicons name="warning" size={20} color={Colors.warning} />
-                            <Text style={styles.cardTitle}>Areas for Improvement</Text>
-                        </View>
-                    </CardHeader>
-                    <CardContent>
-                        <View style={styles.weakSpotsList}>
-                            <View style={styles.weakSpotBadge}>
-                                <Text style={styles.weakSpotText}>suspicious links</Text>
+                {/* Weak Spots Alert - matches web: mt-8 */}
+                {weakSpots.length > 0 && (
+                    <Card style={styles.weakSpotsCard}>
+                        <CardHeader>
+                            <View style={styles.titleWithIcon}>
+                                <Ionicons name="warning" size={20} color={colors.warning} />
+                                <CardTitle style={styles.cardTitleText}>Areas for Improvement</CardTitle>
                             </View>
-                            <View style={styles.weakSpotBadge}>
-                                <Text style={styles.weakSpotText}>attachments</Text>
+                        </CardHeader>
+                        <CardContent>
+                            <View style={styles.badgeRow}>
+                                {weakSpots.map((spot, i) => (
+                                    <View key={i} style={styles.weakSpotBadge}>
+                                        <Text style={styles.weakSpotText}>{spot}</Text>
+                                    </View>
+                                ))}
                             </View>
-                        </View>
-                        <Text style={styles.viewAnalytics}>View detailed analytics →</Text>
-                    </CardContent>
-                </Card>
+                            <Text style={styles.linkText}>View detailed analytics →</Text>
+                        </CardContent>
+                    </Card>
+                )}
             </ScrollView>
         </SafeAreaView>
     );
@@ -191,151 +233,150 @@ export default function DashboardScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Colors.background,
+        backgroundColor: colors.background,
     },
     scrollView: {
         flex: 1,
     },
     scrollContent: {
-        padding: Spacing.lg,
-        paddingBottom: Spacing.xxl * 2,
+        padding: spacing[4],
+        paddingBottom: spacing[10],
     },
     header: {
-        marginBottom: Spacing.lg,
+        marginBottom: spacing[8],
     },
     title: {
-        fontSize: FontSizes["2xl"],
-        fontWeight: "700",
-        color: Colors.foreground,
+        fontSize: fontSize["3xl"],
+        fontWeight: fontWeight.bold,
+        color: colors.foreground,
+        letterSpacing: -0.5,
+        marginBottom: spacing[0.5],
     },
     subtitle: {
-        fontSize: FontSizes.base,
-        color: Colors.mutedForeground,
-        marginTop: Spacing.xs,
+        fontSize: fontSize.base,
+        color: colors.mutedForeground,
+        lineHeight: fontSize.base * 1.5,
     },
-    statsRow: {
+    // Stats Grid - 2x2 on mobile
+    statsGrid: {
         flexDirection: "row",
-        justifyContent: "space-between",
-        marginBottom: Spacing.lg,
+        flexWrap: "wrap",
+        gap: spacing[4],
+        marginBottom: spacing[8],
     },
     statCard: {
-        flex: 1,
-        backgroundColor: Colors.card,
-        borderRadius: BorderRadius.md,
-        borderWidth: 1,
-        borderColor: Colors.border,
-        padding: Spacing.md,
-        marginHorizontal: Spacing.xs,
-        alignItems: "center",
+        width: "47%",
     },
-    statValue: {
-        fontSize: FontSizes.xl,
-        fontWeight: "700",
-        color: Colors.foreground,
-        marginTop: Spacing.xs,
-    },
-    statLabel: {
-        fontSize: FontSizes.xs,
-        color: Colors.mutedForeground,
-    },
-    card: {
-        marginBottom: Spacing.lg,
-    },
-    cardHeaderRow: {
+    statHeader: {
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
+        paddingBottom: spacing[2],
+    },
+    statLabel: {
+        fontSize: fontSize.sm,
+        fontWeight: fontWeight.medium,
+        color: colors.foreground,
+    },
+    statContent: {
+        paddingTop: 0,
+    },
+    statValue: {
+        fontSize: fontSize["2xl"],
+        fontWeight: fontWeight.bold,
+        color: colors.foreground,
+    },
+    // Feature Cards
+    featureCards: {
+        gap: spacing[6],
+    },
+    featureCard: {
+        marginBottom: 0,
     },
     cardTitleRow: {
         flexDirection: "row",
+        justifyContent: "space-between",
         alignItems: "center",
-        gap: Spacing.sm,
     },
-    cardTitle: {
-        fontSize: FontSizes.base,
-        fontWeight: "600",
-        color: Colors.foreground,
-    },
-    cardDescription: {
-        fontSize: FontSizes.sm,
-        color: Colors.mutedForeground,
-        marginTop: Spacing.xs,
-    },
-    lessonMeta: {
+    titleWithIcon: {
         flexDirection: "row",
         alignItems: "center",
-        gap: Spacing.md,
-        marginBottom: Spacing.md,
+        gap: spacing[2],
     },
-    topicBadge: {
-        backgroundColor: `${Colors.primary}15`,
-        paddingVertical: Spacing.xs,
-        paddingHorizontal: Spacing.sm,
-        borderRadius: BorderRadius.full,
+    cardTitleText: {
+        fontSize: fontSize.base,
+        fontWeight: fontWeight.semibold,
+        color: colors.foreground,
     },
-    topicText: {
-        fontSize: FontSizes.xs,
-        color: Colors.primary,
-        fontWeight: "500",
-    },
-    lessonCount: {
-        fontSize: FontSizes.sm,
-        color: Colors.mutedForeground,
+    mutedText: {
+        fontSize: fontSize.sm,
+        color: colors.mutedForeground,
+        marginBottom: spacing[4],
     },
     cardButton: {
-        marginTop: Spacing.sm,
+        marginTop: spacing[1],
     },
-    gmailStatus: {
+    buttonText: {
+        color: colors.primaryForeground,
+        fontWeight: fontWeight.medium,
+        fontSize: fontSize.sm,
+    },
+    outlineButtonText: {
+        color: colors.foreground,
+        fontWeight: fontWeight.medium,
+        fontSize: fontSize.sm,
+    },
+    statusRow: {
         flexDirection: "row",
         alignItems: "center",
-        gap: Spacing.xs,
-        marginBottom: Spacing.md,
+        gap: spacing[2],
+        marginBottom: spacing[4],
     },
     statusText: {
-        fontSize: FontSizes.sm,
-        color: Colors.mutedForeground,
+        fontSize: fontSize.sm,
+        color: colors.mutedForeground,
     },
     progressStats: {
         flexDirection: "row",
-        gap: Spacing.lg,
-        marginBottom: Spacing.md,
+        gap: spacing[4],
+        marginBottom: spacing[4],
     },
-    progressStat: {
+    progressItem: {
         flexDirection: "row",
-        gap: Spacing.xs,
     },
     progressLabel: {
-        fontSize: FontSizes.sm,
-        color: Colors.mutedForeground,
+        fontSize: fontSize.sm,
+        color: colors.mutedForeground,
     },
     progressValue: {
-        fontSize: FontSizes.sm,
-        fontWeight: "600",
-        color: Colors.foreground,
+        fontSize: fontSize.sm,
+        fontWeight: fontWeight.medium,
+        color: colors.foreground,
     },
+    // Weak Spots
     weakSpotsCard: {
-        marginBottom: 0,
+        marginTop: spacing[8],
     },
-    weakSpotsList: {
+    badgeRow: {
         flexDirection: "row",
         flexWrap: "wrap",
-        gap: Spacing.sm,
-        marginBottom: Spacing.md,
+        gap: spacing[2],
+        marginBottom: spacing[4],
     },
     weakSpotBadge: {
-        backgroundColor: `${Colors.warning}15`,
-        paddingVertical: Spacing.xs,
-        paddingHorizontal: Spacing.md,
-        borderRadius: BorderRadius.full,
+        backgroundColor: colors.warningLight,
+        paddingVertical: spacing[1],
+        paddingHorizontal: spacing[3],
+        borderRadius: radius.full,
     },
     weakSpotText: {
-        fontSize: FontSizes.sm,
-        color: Colors.warning,
+        fontSize: fontSize.sm,
+        color: "#a16207", // Tailwind yellow-700
         textTransform: "capitalize",
     },
-    viewAnalytics: {
-        fontSize: FontSizes.sm,
-        color: Colors.primary,
-        fontWeight: "500",
+    linkText: {
+        fontSize: fontSize.sm,
+        color: colors.primary,
+        fontWeight: fontWeight.medium,
     },
 });
