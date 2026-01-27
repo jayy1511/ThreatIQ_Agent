@@ -90,6 +90,12 @@ npm run dev
 ```
 Frontend runs at `http://localhost:3000`
 
+### Mobile (PWA)
+The web app is installable on mobile devices:
+1. Open the deployed Vercel URL on your phone
+2. Install via browser menu: **"Add to Home Screen"** (iOS) or **"Install App"** (Android)
+3. Runs as standalone app with offline support
+
 ## Environment Variables
 
 ### Backend (.env)
