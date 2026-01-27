@@ -16,6 +16,7 @@ import { Shield, Target, TrendingUp, AlertTriangle, CheckCircle2, XCircle, Flame
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import InstallPrompt from '@/components/InstallPrompt';
 
 interface LessonProgress {
   xp_total: number;
@@ -89,6 +90,7 @@ export default function DashboardPage() {
   return (
     <ProtectedRoute>
       <div className="container mx-auto py-10 px-4">
+        <InstallPrompt />
         <h1 className="text-3xl font-bold tracking-tight mb-2">
           Dashboard
         </h1>
