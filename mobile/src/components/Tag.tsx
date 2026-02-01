@@ -1,11 +1,11 @@
-// Tag/Chip Component
+// Tag Component - Matches Web UI chips
 import React from 'react';
 import { View, Text, StyleSheet, ViewStyle } from 'react-native';
-import { colors, spacing, borderRadius, fontSize } from '../theme/colors';
+import { colors, spacing, fontSize, borderRadius } from '../theme/colors';
 
 interface TagProps {
     label: string;
-    variant?: 'default' | 'success' | 'warning' | 'error' | 'accent';
+    variant?: 'default' | 'accent' | 'success' | 'warning' | 'error';
     size?: 'sm' | 'md';
     style?: ViewStyle;
 }
@@ -13,7 +13,7 @@ interface TagProps {
 export function Tag({ label, variant = 'default', size = 'md', style }: TagProps) {
     return (
         <View style={[styles.tag, styles[variant], styles[`size_${size}`], style]}>
-            <Text style={[styles.text, styles[`text_${variant}`], styles[`textSize_${size}`]]}>
+            <Text style={[styles.text, styles[`${variant}Text`], styles[`size_${size}_text`]]}>
                 {label}
             </Text>
         </View>
@@ -29,7 +29,7 @@ const styles = StyleSheet.create({
     // Sizes
     size_sm: {
         paddingHorizontal: spacing.sm,
-        paddingVertical: spacing.xs / 2,
+        paddingVertical: 2,
     },
     size_md: {
         paddingHorizontal: spacing.md,
@@ -38,46 +38,56 @@ const styles = StyleSheet.create({
 
     // Variants
     default: {
-        backgroundColor: colors.inputBackground,
-    },
-    success: {
-        backgroundColor: 'rgba(16, 185, 129, 0.15)',
-    },
-    warning: {
-        backgroundColor: 'rgba(245, 158, 11, 0.15)',
-    },
-    error: {
-        backgroundColor: 'rgba(239, 68, 68, 0.15)',
+        backgroundColor: colors.card,
+        borderWidth: 1,
+        borderColor: colors.cardBorder,
     },
     accent: {
-        backgroundColor: 'rgba(139, 92, 246, 0.15)',
+        backgroundColor: colors.primary + '20',
+        borderWidth: 1,
+        borderColor: colors.primary + '40',
+    },
+    success: {
+        backgroundColor: colors.successBg,
+        borderWidth: 1,
+        borderColor: colors.success + '40',
+    },
+    warning: {
+        backgroundColor: colors.warningBg,
+        borderWidth: 1,
+        borderColor: colors.warning + '40',
+    },
+    error: {
+        backgroundColor: colors.errorBg,
+        borderWidth: 1,
+        borderColor: colors.error + '40',
     },
 
     // Text
     text: {
         fontWeight: '500',
     },
-    text_default: {
+    defaultText: {
         color: colors.textMuted,
     },
-    text_success: {
+    accentText: {
+        color: colors.primary,
+    },
+    successText: {
         color: colors.success,
     },
-    text_warning: {
+    warningText: {
         color: colors.warning,
     },
-    text_error: {
+    errorText: {
         color: colors.error,
-    },
-    text_accent: {
-        color: colors.accent,
     },
 
     // Text sizes
-    textSize_sm: {
+    size_sm_text: {
         fontSize: fontSize.xs,
     },
-    textSize_md: {
+    size_md_text: {
         fontSize: fontSize.sm,
     },
 });

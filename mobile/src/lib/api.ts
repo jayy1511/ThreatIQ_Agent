@@ -1,8 +1,11 @@
-// API Client for ThreatIQ Backend Gateway
+// API Client with cold-start handling for Render Free tier
 import { auth } from './firebase';
 import { API_BASE_URL } from './config';
 
+// ============================================
 // Types
+// ============================================
+
 export interface AnalysisRequest {
     message: string;
     user_guess?: string;
@@ -29,6 +32,12 @@ export interface AnalysisResponse {
     was_correct?: boolean;
 }
 
+export interface ServiceHealthStatus {
+    status: 'ready' | 'warming_up' | 'unavailable' | 'error';
+    message?: string;
+    retry_after_seconds?: number;
+}
+
 export interface TodayLesson {
     lesson: {
         lesson_id: string;
@@ -52,10 +61,7 @@ export interface LessonProgress {
     streak_best: number;
     last_lesson_completed_date: string | null;
     lessons_completed: number;
-    last_7_days: Array<{
-        date: string;
-        completed: boolean;
-    }>;
+    last_7_days: Array<{ date: string; completed: boolean }>;
 }
 
 export interface ProfileSummary {
@@ -85,18 +91,26 @@ export interface LessonCompleteResponse {
     correct_answers: number[];
 }
 
-// API Error class
+// ============================================
+// API Error
+// ============================================
+
 export class ApiError extends Error {
     status: number;
+    isWarmingUp: boolean;
 
-    constructor(message: string, status: number) {
+    constructor(message: string, status: number, isWarmingUp = false) {
         super(message);
         this.name = 'ApiError';
         this.status = status;
+        this.isWarmingUp = isWarmingUp;
     }
 }
 
-// Get auth token for authenticated requests
+// ============================================
+// Auth Token
+// ============================================
+
 async function getAuthToken(): Promise<string | null> {
     const user = auth.currentUser;
     if (!user) return null;
@@ -109,7 +123,10 @@ async function getAuthToken(): Promise<string | null> {
     }
 }
 
-// Fetch wrapper with error handling
+// ============================================
+// Fetch Wrapper with Cold-Start Handling
+// ============================================
+
 async function apiFetch<T>(
     endpoint: string,
     options: {
@@ -117,9 +134,16 @@ async function apiFetch<T>(
         body?: any;
         authenticated?: boolean;
         timeout?: number;
+        retryOnWarmup?: boolean;
     } = {}
 ): Promise<T> {
-    const { method = 'GET', body, authenticated = false, timeout = 30000 } = options;
+    const {
+        method = 'GET',
+        body,
+        authenticated = false,
+        timeout = 60000,
+        retryOnWarmup = true
+    } = options;
 
     if (!API_BASE_URL) {
         throw new ApiError('API base URL not configured', 0);
@@ -151,14 +175,22 @@ async function apiFetch<T>(
 
         clearTimeout(timeoutId);
 
+        // Handle warming up errors
+        if (response.status === 502 || response.status === 503 || response.status === 504) {
+            let errorMessage = 'Analysis service warming up, please retry in 30 seconds';
+            try {
+                const errorData = await response.json();
+                errorMessage = errorData.detail || errorMessage;
+            } catch { }
+            throw new ApiError(errorMessage, response.status, true);
+        }
+
         if (!response.ok) {
             let errorMessage = `Request failed: ${response.status}`;
             try {
                 const errorData = await response.json();
                 errorMessage = errorData.detail || errorMessage;
-            } catch {
-                // Ignore JSON parse error
-            }
+            } catch { }
             throw new ApiError(errorMessage, response.status);
         }
 
@@ -167,7 +199,7 @@ async function apiFetch<T>(
         clearTimeout(timeoutId);
 
         if (error.name === 'AbortError') {
-            throw new ApiError('Request timeout', 408);
+            throw new ApiError('Request timeout - service may be warming up', 408, true);
         }
 
         if (error instanceof ApiError) {
@@ -182,19 +214,33 @@ async function apiFetch<T>(
 }
 
 // ============================================
-// PUBLIC ENDPOINTS (no auth required)
+// HEALTH CHECK (for cold-start detection)
 // ============================================
 
-/**
- * Analyze a message for phishing (public, no auth)
- */
+export async function checkServiceHealth(): Promise<ServiceHealthStatus> {
+    try {
+        return await apiFetch<ServiceHealthStatus>('/analysis-service/health', {
+            timeout: 15000,
+            retryOnWarmup: false,
+        });
+    } catch (error) {
+        return {
+            status: 'unavailable',
+            message: error instanceof Error ? error.message : 'Health check failed',
+            retry_after_seconds: 30,
+        };
+    }
+}
+
+// ============================================
+// PUBLIC ENDPOINTS
+// ============================================
+
 export async function analyzePublic(message: string, userGuess?: string): Promise<AnalysisResponse> {
     return apiFetch<AnalysisResponse>('/analyze-public', {
         method: 'POST',
-        body: {
-            message,
-            user_guess: userGuess,
-        },
+        body: { message, user_guess: userGuess },
+        timeout: 120000, // 2 min for cold starts
     });
 }
 
@@ -202,9 +248,6 @@ export async function analyzePublic(message: string, userGuess?: string): Promis
 // AUTHENTICATED ENDPOINTS
 // ============================================
 
-/**
- * Analyze a message with full tracking (authenticated)
- */
 export async function analyze(
     message: string,
     userId: string,
@@ -212,64 +255,43 @@ export async function analyze(
 ): Promise<AnalysisResponse> {
     return apiFetch<AnalysisResponse>('/analyze', {
         method: 'POST',
-        body: {
-            message,
-            user_id: userId,
-            user_guess: userGuess,
-        },
+        body: { message, user_id: userId, user_guess: userGuess },
         authenticated: true,
+        timeout: 120000,
     });
 }
 
-/**
- * Get today's lesson
- */
 export async function getTodayLesson(): Promise<TodayLesson> {
-    return apiFetch<TodayLesson>('/lessons/today', {
-        authenticated: true,
-    });
+    return apiFetch<TodayLesson>('/lessons/today', { authenticated: true });
 }
 
-/**
- * Complete a lesson
- */
 export async function completeLesson(
     lessonId: string,
     answers: number[]
 ): Promise<LessonCompleteResponse> {
     return apiFetch<LessonCompleteResponse>('/lessons/complete', {
         method: 'POST',
-        body: {
-            lesson_id: lessonId,
-            answers,
-        },
+        body: { lesson_id: lessonId, answers },
         authenticated: true,
     });
 }
 
-/**
- * Get lesson progress (XP, streak, etc.)
- */
 export async function getLessonProgress(): Promise<LessonProgress> {
-    return apiFetch<LessonProgress>('/lessons/progress', {
-        authenticated: true,
-    });
+    return apiFetch<LessonProgress>('/lessons/progress', { authenticated: true });
 }
 
-/**
- * Get user profile summary
- */
 export async function getProfileSummary(userId: string): Promise<ProfileSummary> {
-    return apiFetch<ProfileSummary>(`/profile/${userId}/summary`, {
-        authenticated: true,
-    });
+    return apiFetch<ProfileSummary>(`/profile/${userId}/summary`, { authenticated: true });
 }
 
-/**
- * Get user analysis history
- */
 export async function getAnalysisHistory(userId: string): Promise<{ history: any[] }> {
-    return apiFetch<{ history: any[] }>(`/profile/${userId}/history`, {
-        authenticated: true,
-    });
+    return apiFetch<{ history: any[] }>(`/profile/${userId}/history`, { authenticated: true });
+}
+
+export async function getGmailStatus(): Promise<any> {
+    try {
+        return await apiFetch<any>('/gmail/status', { authenticated: true });
+    } catch {
+        return { connected: false, error: 'Gmail integration not available' };
+    }
 }

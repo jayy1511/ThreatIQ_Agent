@@ -1,32 +1,25 @@
-// Register Screen
+// Register Screen - Matches Web UI
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
-import { Link, useRouter } from 'expo-router';
+import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, TouchableOpacity } from 'react-native';
+import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Card, Button, Input } from '../../src/components';
 import { useAuth } from '../../src/lib/auth';
-import { Button, Input } from '../../src/components';
-import { colors, spacing, fontSize } from '../../src/theme/colors';
+import { colors, spacing, fontSize, borderRadius } from '../../src/theme/colors';
 
 export default function RegisterScreen() {
+    const router = useRouter();
+    const { signUp, loading, error } = useAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [localError, setLocalError] = useState<string | null>(null);
-    const [loading, setLoading] = useState(false);
-    const { signUp, error, clearError } = useAuth();
-    const router = useRouter();
 
     const handleRegister = async () => {
         setLocalError(null);
-        clearError();
 
-        if (!email.trim()) {
-            setLocalError('Email is required');
-            return;
-        }
-
-        if (password.length < 6) {
-            setLocalError('Password must be at least 6 characters');
+        if (!email || !password || !confirmPassword) {
+            setLocalError('Please fill in all fields');
             return;
         }
 
@@ -35,15 +28,14 @@ export default function RegisterScreen() {
             return;
         }
 
-        setLoading(true);
+        if (password.length < 6) {
+            setLocalError('Password must be at least 6 characters');
+            return;
+        }
 
-        try {
-            await signUp(email.trim(), password);
+        const success = await signUp(email, password);
+        if (success) {
             router.replace('/(tabs)/dashboard');
-        } catch (err) {
-            // Error is handled by AuthContext
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -52,80 +44,86 @@ export default function RegisterScreen() {
     return (
         <SafeAreaView style={styles.container}>
             <KeyboardAvoidingView
-                style={styles.keyboardView}
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                style={styles.keyboardView}
             >
-                <ScrollView
-                    contentContainerStyle={styles.scrollContent}
-                    keyboardShouldPersistTaps="handled"
-                    showsVerticalScrollIndicator={false}
-                >
+                <View style={styles.content}>
+                    {/* Header */}
                     <View style={styles.header}>
-                        <Text style={styles.logo}>🛡️</Text>
+                        <View style={styles.logoContainer}>
+                            <Text style={styles.logoEmoji}>🛡️</Text>
+                        </View>
                         <Text style={styles.title}>Create Account</Text>
-                        <Text style={styles.subtitle}>Join ThreatIQ to stay protected</Text>
+                        <Text style={styles.subtitle}>
+                            Start your security training today
+                        </Text>
                     </View>
 
-                    <View style={styles.form}>
-                        <Input
-                            label="Email"
-                            placeholder="Enter your email"
-                            value={email}
-                            onChangeText={(text) => {
-                                setEmail(text);
-                                setLocalError(null);
-                            }}
-                            keyboardType="email-address"
-                            autoCapitalize="none"
-                            autoCorrect={false}
-                        />
-
-                        <Input
-                            label="Password"
-                            placeholder="Create a password (min. 6 characters)"
-                            value={password}
-                            onChangeText={(text) => {
-                                setPassword(text);
-                                setLocalError(null);
-                            }}
-                            secureTextEntry
-                        />
-
-                        <Input
-                            label="Confirm Password"
-                            placeholder="Confirm your password"
-                            value={confirmPassword}
-                            onChangeText={(text) => {
-                                setConfirmPassword(text);
-                                setLocalError(null);
-                            }}
-                            secureTextEntry
-                        />
-
+                    {/* Register Card */}
+                    <Card style={styles.registerCard}>
+                        {/* Error Message */}
                         {displayError && (
                             <View style={styles.errorContainer}>
                                 <Text style={styles.errorText}>{displayError}</Text>
                             </View>
                         )}
 
-                        <Button
-                            title="Create Account"
-                            onPress={handleRegister}
-                            loading={loading}
-                            disabled={!email.trim() || !password || !confirmPassword}
-                            fullWidth
-                            size="lg"
-                            style={styles.button}
+                        {/* Form Fields */}
+                        <Input
+                            label="Email"
+                            placeholder="you@example.com"
+                            value={email}
+                            onChangeText={setEmail}
+                            keyboardType="email-address"
+                            autoCapitalize="none"
+                            autoComplete="email"
                         />
-                    </View>
 
-                    <View style={styles.footer}>
-                        <Text style={styles.footerText}>Already have an account? </Text>
-                        <Link href="/(auth)/login" asChild>
-                            <Text style={styles.link}>Sign In</Text>
-                        </Link>
-                    </View>
-                </ScrollView>
+                        <Input
+                            label="Password"
+                            placeholder="Create a password (min 6 chars)"
+                            value={password}
+                            onChangeText={setPassword}
+                            secureTextEntry
+                            autoComplete="new-password"
+                        />
+
+                        <Input
+                            label="Confirm Password"
+                            placeholder="Confirm your password"
+                            value={confirmPassword}
+                            onChangeText={setConfirmPassword}
+                            secureTextEntry
+                        />
+
+                        {/* Register Button */}
+                        <Button
+                            title={loading ? "Creating account..." : "Create Account"}
+                            onPress={handleRegister}
+                            fullWidth
+                            loading={loading}
+                            disabled={!email || !password || !confirmPassword}
+                            style={styles.registerButton}
+                        />
+
+                        {/* Divider */}
+                        <View style={styles.divider}>
+                            <View style={styles.dividerLine} />
+                            <Text style={styles.dividerText}>or</Text>
+                            <View style={styles.dividerLine} />
+                        </View>
+
+                        {/* Login Link */}
+                        <TouchableOpacity
+                            onPress={() => router.back()}
+                            style={styles.loginLink}
+                        >
+                            <Text style={styles.loginText}>
+                                Already have an account? <Text style={styles.loginTextBold}>Sign In</Text>
+                            </Text>
+                        </TouchableOpacity>
+                    </Card>
+                </View>
             </KeyboardAvoidingView>
         </SafeAreaView>
     );
@@ -139,19 +137,26 @@ const styles = StyleSheet.create({
     keyboardView: {
         flex: 1,
     },
-    scrollContent: {
-        flexGrow: 1,
-        paddingHorizontal: spacing.lg,
+    content: {
+        flex: 1,
+        padding: spacing.lg,
         justifyContent: 'center',
-        paddingVertical: spacing.xl,
     },
     header: {
         alignItems: 'center',
-        marginBottom: spacing.xxl,
+        marginBottom: spacing.xl,
     },
-    logo: {
-        fontSize: 64,
+    logoContainer: {
+        width: 80,
+        height: 80,
+        borderRadius: 20,
+        backgroundColor: colors.primary + '20',
+        alignItems: 'center',
+        justifyContent: 'center',
         marginBottom: spacing.md,
+    },
+    logoEmoji: {
+        fontSize: 40,
     },
     title: {
         fontSize: fontSize.xxxl,
@@ -164,13 +169,14 @@ const styles = StyleSheet.create({
         color: colors.textMuted,
         textAlign: 'center',
     },
-    form: {
-        marginBottom: spacing.xl,
+    registerCard: {
+        paddingVertical: spacing.xl,
+        paddingHorizontal: spacing.lg,
     },
     errorContainer: {
-        backgroundColor: 'rgba(239, 68, 68, 0.1)',
-        borderRadius: 8,
+        backgroundColor: colors.errorBg,
         padding: spacing.md,
+        borderRadius: borderRadius.md,
         marginBottom: spacing.md,
     },
     errorText: {
@@ -178,21 +184,34 @@ const styles = StyleSheet.create({
         fontSize: fontSize.sm,
         textAlign: 'center',
     },
-    button: {
+    registerButton: {
         marginTop: spacing.md,
     },
-    footer: {
+    divider: {
         flexDirection: 'row',
-        justifyContent: 'center',
         alignItems: 'center',
+        marginVertical: spacing.lg,
     },
-    footerText: {
+    dividerLine: {
+        flex: 1,
+        height: 1,
+        backgroundColor: colors.cardBorder,
+    },
+    dividerText: {
+        color: colors.textMuted,
+        paddingHorizontal: spacing.md,
+        fontSize: fontSize.sm,
+    },
+    loginLink: {
+        alignItems: 'center',
+        padding: spacing.sm,
+    },
+    loginText: {
         color: colors.textMuted,
         fontSize: fontSize.md,
     },
-    link: {
-        color: colors.accent,
-        fontSize: fontSize.md,
+    loginTextBold: {
+        color: colors.primary,
         fontWeight: '600',
     },
 });

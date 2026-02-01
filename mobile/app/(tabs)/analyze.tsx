@@ -1,10 +1,17 @@
-// Analyze Screen - Full Implementation
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+// Analyze Screen - Matches Web UI with cold-start handling
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { ScreenContainer, Card, Button, Input, Tag } from '../../src/components';
 import { useAuth } from '../../src/lib/auth';
-import { analyze, analyzePublic, AnalysisResponse, ApiError } from '../../src/lib/api';
-import { colors, spacing, fontSize } from '../../src/theme/colors';
+import {
+    analyze,
+    analyzePublic,
+    checkServiceHealth,
+    AnalysisResponse,
+    ApiError,
+    ServiceHealthStatus
+} from '../../src/lib/api';
+import { colors, spacing, fontSize, borderRadius } from '../../src/theme/colors';
 
 export default function AnalyzeScreen() {
     const { user } = useAuth();
@@ -13,6 +20,20 @@ export default function AnalyzeScreen() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [result, setResult] = useState<AnalysisResponse | null>(null);
+    const [serviceStatus, setServiceStatus] = useState<ServiceHealthStatus | null>(null);
+    const [checkingHealth, setCheckingHealth] = useState(false);
+
+    // Check service health on mount
+    useEffect(() => {
+        checkHealth();
+    }, []);
+
+    const checkHealth = async () => {
+        setCheckingHealth(true);
+        const status = await checkServiceHealth();
+        setServiceStatus(status);
+        setCheckingHealth(false);
+    };
 
     const handleAnalyze = async () => {
         if (!message.trim()) return;
@@ -25,17 +46,21 @@ export default function AnalyzeScreen() {
             let response: AnalysisResponse;
 
             if (user) {
-                // Authenticated analysis - saves to history
                 response = await analyze(message, user.uid, userGuess || undefined);
             } else {
-                // Public analysis - no history
                 response = await analyzePublic(message, userGuess || undefined);
             }
 
             setResult(response);
+            setServiceStatus({ status: 'ready' }); // Service is now warm
         } catch (err) {
             if (err instanceof ApiError) {
-                setError(err.message);
+                if (err.isWarmingUp) {
+                    setError('🔄 Service is warming up. Please wait 30 seconds and try again.');
+                    setServiceStatus({ status: 'warming_up', retry_after_seconds: 30 });
+                } else {
+                    setError(err.message);
+                }
             } else {
                 setError('Failed to analyze message. Please try again.');
             }
@@ -53,14 +78,19 @@ export default function AnalyzeScreen() {
 
     const getLabelVariant = (label: string): 'success' | 'warning' | 'error' => {
         switch (label.toLowerCase()) {
-            case 'safe':
-                return 'success';
-            case 'suspicious':
-                return 'warning';
-            case 'phishing':
-                return 'error';
-            default:
-                return 'warning';
+            case 'safe': return 'success';
+            case 'suspicious': return 'warning';
+            case 'phishing': return 'error';
+            default: return 'warning';
+        }
+    };
+
+    const getLabelEmoji = (label: string) => {
+        switch (label.toLowerCase()) {
+            case 'safe': return '✅';
+            case 'suspicious': return '⚠️';
+            case 'phishing': return '🎣';
+            default: return '❓';
         }
     };
 
@@ -68,47 +98,86 @@ export default function AnalyzeScreen() {
         <ScreenContainer keyboard>
             <Text style={styles.title}>Analyze Message</Text>
             <Text style={styles.subtitle}>
-                Paste a suspicious email or message to check for phishing
+                Paste a suspicious email or SMS to check for phishing
             </Text>
+
+            {/* Service Status Banner */}
+            {serviceStatus?.status === 'warming_up' && (
+                <View style={styles.warmupBanner}>
+                    <Text style={styles.warmupText}>
+                        ⏳ Server is waking up... this may take 20-30 seconds
+                    </Text>
+                    <Button
+                        title="Check Again"
+                        onPress={checkHealth}
+                        loading={checkingHealth}
+                        variant="outline"
+                        size="sm"
+                    />
+                </View>
+            )}
 
             {!result ? (
                 <>
-                    <Input
-                        label="Message Content"
-                        placeholder="Paste your message here..."
-                        value={message}
-                        onChangeText={setMessage}
-                        multiline
-                        numberOfLines={6}
-                    />
-
-                    {/* Optional: User prediction */}
-                    <Text style={styles.guessLabel}>Your prediction (optional):</Text>
-                    <View style={styles.guessButtons}>
-                        <Button
-                            title="🎣 Phishing"
-                            onPress={() => setUserGuess(userGuess === 'phishing' ? null : 'phishing')}
-                            variant={userGuess === 'phishing' ? 'primary' : 'outline'}
-                            size="sm"
-                            style={styles.guessButton}
-                        />
-                        <Button
-                            title="✅ Safe"
-                            onPress={() => setUserGuess(userGuess === 'safe' ? null : 'safe')}
-                            variant={userGuess === 'safe' ? 'primary' : 'outline'}
-                            size="sm"
-                            style={styles.guessButton}
+                    {/* Message Input */}
+                    <View style={styles.inputContainer}>
+                        <Input
+                            label="Message Content"
+                            placeholder="Paste the suspicious message here..."
+                            value={message}
+                            onChangeText={setMessage}
+                            multiline
+                            numberOfLines={6}
+                            containerStyle={styles.messageInput}
                         />
                     </View>
 
+                    {/* Prediction Toggle (matches web) */}
+                    <Text style={styles.guessLabel}>
+                        What do you think? (optional - helps you learn!)
+                    </Text>
+                    <View style={styles.predictionToggle}>
+                        <TouchableOpacity
+                            style={[
+                                styles.predictionButton,
+                                userGuess === 'phishing' && styles.predictionButtonActive,
+                                userGuess === 'phishing' && styles.predictionPhishing,
+                            ]}
+                            onPress={() => setUserGuess(userGuess === 'phishing' ? null : 'phishing')}
+                        >
+                            <Text style={styles.predictionEmoji}>🎣</Text>
+                            <Text style={[
+                                styles.predictionText,
+                                userGuess === 'phishing' && styles.predictionTextActive
+                            ]}>Phishing</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={[
+                                styles.predictionButton,
+                                userGuess === 'safe' && styles.predictionButtonActive,
+                                userGuess === 'safe' && styles.predictionSafe,
+                            ]}
+                            onPress={() => setUserGuess(userGuess === 'safe' ? null : 'safe')}
+                        >
+                            <Text style={styles.predictionEmoji}>✅</Text>
+                            <Text style={[
+                                styles.predictionText,
+                                userGuess === 'safe' && styles.predictionTextActive
+                            ]}>Safe</Text>
+                        </TouchableOpacity>
+                    </View>
+
+                    {/* Error Message */}
                     {error && (
                         <View style={styles.errorContainer}>
                             <Text style={styles.errorText}>{error}</Text>
                         </View>
                     )}
 
+                    {/* Analyze Button (matches web purple) */}
                     <Button
-                        title={loading ? "Analyzing..." : "Analyze"}
+                        title={loading ? "Analyzing..." : "🔍 Analyze Message"}
                         onPress={handleAnalyze}
                         fullWidth
                         loading={loading}
@@ -118,24 +187,23 @@ export default function AnalyzeScreen() {
                 </>
             ) : (
                 <ScrollView showsVerticalScrollIndicator={false}>
-                    {/* Classification Result */}
+                    {/* Main Result Card */}
                     <Card style={styles.resultCard}>
                         <View style={styles.resultHeader}>
-                            <Text style={styles.resultTitle}>Classification</Text>
-                            <Tag
-                                label={result.classification.label.toUpperCase()}
-                                variant={getLabelVariant(result.classification.label)}
-                            />
-                        </View>
-
-                        <View style={styles.confidenceRow}>
-                            <Text style={styles.confidenceLabel}>Confidence:</Text>
-                            <Text style={styles.confidenceValue}>
-                                {Math.round(result.classification.confidence * 100)}%
+                            <Text style={styles.resultEmoji}>
+                                {getLabelEmoji(result.classification.label)}
                             </Text>
+                            <View style={styles.resultInfo}>
+                                <Text style={styles.resultLabel}>
+                                    {result.classification.label.toUpperCase()}
+                                </Text>
+                                <Text style={styles.confidenceText}>
+                                    {Math.round(result.classification.confidence * 100)}% confidence
+                                </Text>
+                            </View>
                         </View>
 
-                        {/* Progress bar */}
+                        {/* Confidence Bar */}
                         <View style={styles.progressBar}>
                             <View
                                 style={[
@@ -152,23 +220,25 @@ export default function AnalyzeScreen() {
                             />
                         </View>
 
-                        {/* User guess feedback */}
+                        {/* User Prediction Feedback */}
                         {result.was_correct !== null && result.was_correct !== undefined && (
                             <View style={[
                                 styles.feedbackBanner,
                                 result.was_correct ? styles.feedbackCorrect : styles.feedbackIncorrect
                             ]}>
                                 <Text style={styles.feedbackText}>
-                                    {result.was_correct ? '✅ Your prediction was correct!' : '❌ Your prediction was incorrect'}
+                                    {result.was_correct
+                                        ? '🎉 Great job! Your prediction was correct!'
+                                        : '📚 Keep learning! Your prediction was incorrect.'}
                                 </Text>
                             </View>
                         )}
                     </Card>
 
                     {/* Reason Tags */}
-                    {result.classification.reason_tags && result.classification.reason_tags.length > 0 && (
+                    {result.classification.reason_tags?.length > 0 && (
                         <Card>
-                            <Text style={styles.sectionTitle}>Reason Tags</Text>
+                            <Text style={styles.sectionTitle}>🏷️ Detected Indicators</Text>
                             <View style={styles.tagsContainer}>
                                 {result.classification.reason_tags.map((tag, i) => (
                                     <Tag key={i} label={tag} variant="accent" size="sm" style={styles.tag} />
@@ -179,22 +249,22 @@ export default function AnalyzeScreen() {
 
                     {/* Explanation */}
                     <Card>
-                        <Text style={styles.sectionTitle}>Explanation</Text>
+                        <Text style={styles.sectionTitle}>📋 Analysis Details</Text>
                         <Text style={styles.explanationText}>{result.explanation}</Text>
                     </Card>
 
                     {/* AI Coach Response */}
                     {result.coach_response && (
                         <Card variant="accent">
-                            <Text style={styles.sectionTitle}>🎓 AI Coach</Text>
+                            <Text style={styles.sectionTitle}>🎓 AI Coach Says</Text>
                             <Text style={styles.coachText}>{result.coach_response}</Text>
                         </Card>
                     )}
 
                     {/* Similar Examples */}
-                    {result.similar_examples && result.similar_examples.length > 0 && (
+                    {result.similar_examples?.length > 0 && (
                         <Card>
-                            <Text style={styles.sectionTitle}>Similar Examples</Text>
+                            <Text style={styles.sectionTitle}>📚 Similar Examples</Text>
                             {result.similar_examples.slice(0, 3).map((example, i) => (
                                 <View key={i} style={styles.exampleItem}>
                                     <View style={styles.exampleHeader}>
@@ -204,7 +274,7 @@ export default function AnalyzeScreen() {
                                             size="sm"
                                         />
                                         <Text style={styles.similarityText}>
-                                            {Math.round(example.similarity * 100)}% similar
+                                            {Math.round(example.similarity * 100)}% match
                                         </Text>
                                     </View>
                                     <Text style={styles.exampleText} numberOfLines={2}>
@@ -215,11 +285,11 @@ export default function AnalyzeScreen() {
                         </Card>
                     )}
 
-                    {/* Analyze Another */}
+                    {/* New Analysis Button */}
                     <Button
-                        title="Analyze Another Message"
+                        title="📝 Analyze Another Message"
                         onPress={clearResult}
-                        variant="outline"
+                        variant="primary"
                         fullWidth
                         style={styles.newAnalysisButton}
                     />
@@ -239,24 +309,74 @@ const styles = StyleSheet.create({
     subtitle: {
         fontSize: fontSize.md,
         color: colors.textMuted,
-        marginBottom: spacing.lg,
+        marginBottom: spacing.md,
+    },
+    warmupBanner: {
+        backgroundColor: colors.warningBg,
+        padding: spacing.md,
+        borderRadius: borderRadius.md,
+        marginBottom: spacing.md,
+        alignItems: 'center',
+        gap: spacing.sm,
+    },
+    warmupText: {
+        color: colors.warning,
+        fontSize: fontSize.sm,
+        textAlign: 'center',
+    },
+    inputContainer: {
+        marginBottom: spacing.md,
+    },
+    messageInput: {
+        minHeight: 150,
     },
     guessLabel: {
         fontSize: fontSize.sm,
         color: colors.textMuted,
         marginBottom: spacing.sm,
     },
-    guessButtons: {
+    predictionToggle: {
         flexDirection: 'row',
         gap: spacing.sm,
-        marginBottom: spacing.md,
+        marginBottom: spacing.lg,
     },
-    guessButton: {
+    predictionButton: {
         flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: spacing.sm,
+        paddingVertical: spacing.md,
+        borderRadius: borderRadius.md,
+        backgroundColor: colors.card,
+        borderWidth: 2,
+        borderColor: colors.cardBorder,
+    },
+    predictionButtonActive: {
+        borderColor: colors.primary,
+    },
+    predictionPhishing: {
+        backgroundColor: colors.errorBg,
+        borderColor: colors.error,
+    },
+    predictionSafe: {
+        backgroundColor: colors.successBg,
+        borderColor: colors.success,
+    },
+    predictionEmoji: {
+        fontSize: 20,
+    },
+    predictionText: {
+        fontSize: fontSize.md,
+        fontWeight: '600',
+        color: colors.textMuted,
+    },
+    predictionTextActive: {
+        color: colors.text,
     },
     errorContainer: {
-        backgroundColor: 'rgba(239, 68, 68, 0.1)',
-        borderRadius: 8,
+        backgroundColor: colors.errorBg,
+        borderRadius: borderRadius.md,
         padding: spacing.md,
         marginBottom: spacing.md,
     },
@@ -273,29 +393,25 @@ const styles = StyleSheet.create({
     },
     resultHeader: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
         alignItems: 'center',
+        gap: spacing.md,
         marginBottom: spacing.md,
     },
-    resultTitle: {
-        fontSize: fontSize.lg,
-        fontWeight: '600',
-        color: colors.text,
+    resultEmoji: {
+        fontSize: 48,
     },
-    confidenceRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: spacing.sm,
+    resultInfo: {
+        flex: 1,
     },
-    confidenceLabel: {
-        fontSize: fontSize.sm,
-        color: colors.textMuted,
-    },
-    confidenceValue: {
-        fontSize: fontSize.lg,
+    resultLabel: {
+        fontSize: fontSize.xxl,
         fontWeight: 'bold',
         color: colors.text,
+    },
+    confidenceText: {
+        fontSize: fontSize.md,
+        color: colors.textMuted,
+        marginTop: 2,
     },
     progressBar: {
         height: 8,
@@ -309,20 +425,21 @@ const styles = StyleSheet.create({
         borderRadius: 4,
     },
     feedbackBanner: {
-        padding: spacing.sm,
-        borderRadius: 8,
+        padding: spacing.md,
+        borderRadius: borderRadius.md,
         alignItems: 'center',
     },
     feedbackCorrect: {
-        backgroundColor: 'rgba(16, 185, 129, 0.15)',
+        backgroundColor: colors.successBg,
     },
     feedbackIncorrect: {
-        backgroundColor: 'rgba(239, 68, 68, 0.15)',
+        backgroundColor: colors.warningBg,
     },
     feedbackText: {
         fontSize: fontSize.sm,
         fontWeight: '500',
         color: colors.text,
+        textAlign: 'center',
     },
     sectionTitle: {
         fontSize: fontSize.lg,

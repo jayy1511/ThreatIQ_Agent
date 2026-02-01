@@ -47,17 +47,22 @@ Four specialized agents collaborate to analyze suspicious messages:
 
 ```
 ThreatIQ_Agent/
-├── frontend/                 # Next.js 14 app
+├── frontend/                 # Next.js 14 web app
 │   ├── src/app/             # Pages (analyze, dashboard, lessons, history)
 │   ├── src/components/      # UI components (Navbar, GmailIntegration)
 │   └── src/lib/             # API client, Firebase config
-├── backend/                  # FastAPI server
+├── backend/                  # FastAPI Gateway (port 8000)
 │   ├── app/agents/          # Classifier, Evidence, Memory, Coach
-│   ├── app/routers/         # API endpoints
+│   ├── app/routers/         # API endpoints (analysis, gmail, lessons, profile)
 │   ├── app/services/        # Gmail OAuth, crypto, triage
-│   └── app/data/            # Lessons content, phishing dataset
-└── services/
-    └── analysis-service/    # Stateless AI microservice
+│   └── app/data/            # Lessons content
+├── services/
+│   └── analysis-service/    # Stateless AI microservice (port 8010)
+├── mobile/                   # Expo React Native app
+│   ├── app/                 # Expo Router screens
+│   └── src/                 # Components, lib, theme
+├── docs/                     # Architecture documentation
+└── docker-compose.yml        # Local microservices orchestration
 ```
 
 ## Quick Start
@@ -90,8 +95,21 @@ npm run dev
 ```
 Frontend runs at `http://localhost:3000`
 
+### Mobile App (Expo)
+```bash
+cd mobile
+npm install
+cp .env.example .env             # Configure Firebase + API URL
+npx expo start                   # Scan QR with Expo Go
+```
+
+**Build APK:**
+```bash
+eas build -p android --profile preview
+```
+
 ### Mobile (PWA)
-The web app is installable on mobile devices:
+The web app is also installable on mobile devices:
 1. Open the deployed Vercel URL on your phone
 2. Install via browser menu: **"Add to Home Screen"** (iOS) or **"Install App"** (Android)
 3. Runs as standalone app with offline support

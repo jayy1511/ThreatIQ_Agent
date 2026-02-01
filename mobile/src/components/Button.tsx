@@ -1,4 +1,4 @@
-// Button Component
+// Button Component - Matches Web UI purple buttons
 import React from 'react';
 import {
     TouchableOpacity,
@@ -6,20 +6,20 @@ import {
     StyleSheet,
     ActivityIndicator,
     ViewStyle,
-    TextStyle
+    TextStyle,
 } from 'react-native';
-import { colors, spacing, borderRadius, fontSize } from '../theme/colors';
+import { colors, spacing, fontSize, borderRadius } from '../theme/colors';
 
 interface ButtonProps {
     title: string;
     onPress: () => void;
     variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
     size?: 'sm' | 'md' | 'lg';
+    fullWidth?: boolean;
     loading?: boolean;
     disabled?: boolean;
     style?: ViewStyle;
     textStyle?: TextStyle;
-    fullWidth?: boolean;
 }
 
 export function Button({
@@ -27,42 +27,44 @@ export function Button({
     onPress,
     variant = 'primary',
     size = 'md',
+    fullWidth = false,
     loading = false,
     disabled = false,
     style,
     textStyle,
-    fullWidth = false,
 }: ButtonProps) {
-    const buttonStyles = [
-        styles.button,
-        styles[variant],
-        styles[`size_${size}`],
-        fullWidth && styles.fullWidth,
-        (disabled || loading) && styles.disabled,
-        style,
-    ];
-
-    const textStyles = [
-        styles.text,
-        styles[`text_${variant}`],
-        styles[`textSize_${size}`],
-        textStyle,
-    ];
+    const isDisabled = disabled || loading;
 
     return (
         <TouchableOpacity
-            style={buttonStyles}
+            style={[
+                styles.button,
+                styles[variant],
+                styles[`size_${size}`],
+                fullWidth && styles.fullWidth,
+                isDisabled && styles.disabled,
+                style,
+            ]}
             onPress={onPress}
-            disabled={disabled || loading}
+            disabled={isDisabled}
             activeOpacity={0.8}
         >
             {loading ? (
                 <ActivityIndicator
-                    color={variant === 'primary' ? colors.white : colors.accent}
                     size="small"
+                    color={variant === 'primary' ? colors.white : colors.primary}
                 />
             ) : (
-                <Text style={textStyles}>{title}</Text>
+                <Text
+                    style={[
+                        styles.text,
+                        styles[`${variant}Text`],
+                        styles[`size_${size}_text`],
+                        textStyle,
+                    ]}
+                >
+                    {title}
+                </Text>
             )}
         </TouchableOpacity>
     );
@@ -73,7 +75,45 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         borderRadius: borderRadius.md,
+        flexDirection: 'row',
+        gap: spacing.sm,
     },
+
+    // Variants
+    primary: {
+        backgroundColor: colors.primary,
+        borderWidth: 0,
+    },
+    secondary: {
+        backgroundColor: colors.card,
+        borderWidth: 1,
+        borderColor: colors.cardBorder,
+    },
+    outline: {
+        backgroundColor: 'transparent',
+        borderWidth: 1,
+        borderColor: colors.primary,
+    },
+    ghost: {
+        backgroundColor: 'transparent',
+        borderWidth: 0,
+    },
+
+    // Sizes
+    size_sm: {
+        paddingVertical: spacing.sm,
+        paddingHorizontal: spacing.md,
+    },
+    size_md: {
+        paddingVertical: spacing.md,
+        paddingHorizontal: spacing.lg,
+    },
+    size_lg: {
+        paddingVertical: spacing.lg,
+        paddingHorizontal: spacing.xl,
+    },
+
+    // States
     fullWidth: {
         width: '100%',
     },
@@ -81,64 +121,32 @@ const styles = StyleSheet.create({
         opacity: 0.5,
     },
 
-    // Variants
-    primary: {
-        backgroundColor: colors.accent,
-    },
-    secondary: {
-        backgroundColor: colors.inputBackground,
-    },
-    outline: {
-        backgroundColor: 'transparent',
-        borderWidth: 1,
-        borderColor: colors.accent,
-    },
-    ghost: {
-        backgroundColor: 'transparent',
-    },
-
-    // Sizes
-    size_sm: {
-        paddingVertical: spacing.xs,
-        paddingHorizontal: spacing.sm,
-        minHeight: 32,
-    },
-    size_md: {
-        paddingVertical: spacing.sm,
-        paddingHorizontal: spacing.md,
-        minHeight: 44,
-    },
-    size_lg: {
-        paddingVertical: spacing.md,
-        paddingHorizontal: spacing.lg,
-        minHeight: 52,
-    },
-
-    // Text
+    // Text styles
     text: {
         fontWeight: '600',
+        textAlign: 'center',
     },
-    text_primary: {
+    primaryText: {
         color: colors.white,
     },
-    text_secondary: {
+    secondaryText: {
         color: colors.text,
     },
-    text_outline: {
-        color: colors.accent,
+    outlineText: {
+        color: colors.primary,
     },
-    text_ghost: {
-        color: colors.accent,
+    ghostText: {
+        color: colors.primary,
     },
 
     // Text sizes
-    textSize_sm: {
+    size_sm_text: {
         fontSize: fontSize.sm,
     },
-    textSize_md: {
+    size_md_text: {
         fontSize: fontSize.md,
     },
-    textSize_lg: {
+    size_lg_text: {
         fontSize: fontSize.lg,
     },
 });

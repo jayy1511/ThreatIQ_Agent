@@ -4,18 +4,7 @@ ThreatIQ uses a microservices architecture with two main services:
 
 ## Architecture Overview
 
-```
-┌─────────────┐       ┌──────────────────┐       ┌──────────────────┐
-│   Frontend  │──────►│  Gateway API     │──────►│ Analysis Service │
-│  (Next.js)  │       │  (port 8000)     │       │   (port 8010)    │
-└─────────────┘       └────────┬─────────┘       └──────────────────┘
-                               │
-                               ▼
-                      ┌──────────────────┐
-                      │    MongoDB       │
-                      │  (persistence)   │
-                      └──────────────────┘
-```
+![Microservices Architecture](./diagrams/microservices_architecture.png)
 
 ### Gateway API (port 8000)
 - Authentication (Firebase token verification)

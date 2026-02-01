@@ -1,54 +1,44 @@
-// Card Component
-import React, { ReactNode } from 'react';
-import { View, StyleSheet, Pressable, ViewStyle } from 'react-native';
+// Card Component - Matches Web UI
+import React from 'react';
+import { View, StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
 import { colors, spacing, borderRadius } from '../theme/colors';
 
 interface CardProps {
-    children: ReactNode;
-    onPress?: () => void;
+    children: React.ReactNode;
     style?: ViewStyle;
     variant?: 'default' | 'accent';
+    onPress?: () => void;
 }
 
-export function Card({ children, onPress, style, variant = 'default' }: CardProps) {
-    const cardStyles = [
+export function Card({ children, style, variant = 'default', onPress }: CardProps) {
+    const cardStyle = [
         styles.card,
-        variant === 'accent' && styles.accent,
+        variant === 'accent' && styles.cardAccent,
         style,
     ];
 
     if (onPress) {
         return (
-            <Pressable
-                style={({ pressed }) => [
-                    ...cardStyles,
-                    pressed && styles.pressed,
-                ]}
-                onPress={onPress}
-            >
+            <TouchableOpacity style={cardStyle} onPress={onPress} activeOpacity={0.8}>
                 {children}
-            </Pressable>
+            </TouchableOpacity>
         );
     }
 
-    return <View style={cardStyles}>{children}</View>;
+    return <View style={cardStyle}>{children}</View>;
 }
 
 const styles = StyleSheet.create({
     card: {
         backgroundColor: colors.card,
         borderRadius: borderRadius.lg,
+        padding: spacing.lg,
         borderWidth: 1,
         borderColor: colors.cardBorder,
-        padding: spacing.md,
         marginBottom: spacing.md,
     },
-    accent: {
-        borderColor: colors.accent,
-        borderWidth: 1,
-    },
-    pressed: {
-        opacity: 0.8,
-        transform: [{ scale: 0.98 }],
+    cardAccent: {
+        backgroundColor: colors.primary + '10',
+        borderColor: colors.primary + '30',
     },
 });

@@ -49,7 +49,7 @@ export default {
                 origin: false
             },
             eas: {
-                projectId: "your-eas-project-id"
+                projectId: "cec65e27-bcc8-4a5d-a4a1-02da76c8e16b"
             }
         }
     }

@@ -33,16 +33,19 @@ backend/
 ├── app/
 │   ├── main.py             # FastAPI entry point
 │   ├── config.py           # Environment config (Pydantic)
-│   ├── agents/             # AI agents
+│   ├── agents/             # AI agents (classifier, coach, evidence, memory)
 │   ├── routers/            # API endpoints
-│   │   ├── analysis.py     # /api/analyze
+│   │   ├── analysis.py     # /api/analyze, /api/analyze-public
 │   │   ├── gmail.py        # /api/gmail/*
 │   │   ├── lessons.py      # /api/lessons/*
 │   │   ├── profile.py      # /api/profile/*
-│   │   └── auth.py         # Firebase token verification
-│   ├── services/           # Gmail, crypto
+│   │   ├── auth.py         # Firebase token verification
+│   │   ├── eval.py         # /api/admin/eval-sample
+│   │   └── metrics.py      # /api/metrics
+│   ├── services/           # Gmail OAuth, client, triage, crypto
+│   ├── models/             # Pydantic models, database
 │   ├── data/               # Lessons content
-│   │   └── lessons.py      # 12 cybersecurity micro-lessons
+│   ├── llm/                # Gemini client utilities
 │   └── tools/              # Dataset utilities
 ├── data/                   # Phishing dataset (CSV)
 └── requirements.txt

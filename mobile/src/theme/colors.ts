@@ -1,9 +1,9 @@
-// Theme colors matching web app dark theme
+// Theme colors matching WEB UI exactly
 export const colors = {
-    // Background colors
-    background: '#0B0F1A',
-    card: '#111827',
-    cardBorder: '#1F2937',
+    // Background colors (matches web dark theme)
+    background: '#0B0B10',      // Near black
+    card: '#12121A',            // Slightly lighter dark
+    cardBorder: '#1E1E2E',      // Subtle border
 
     // Text colors
     text: '#FFFFFF',
@@ -11,28 +11,41 @@ export const colors = {
     textMuted: '#9CA3AF',
     textDim: '#6B7280',
 
-    // Accent colors
-    accent: '#8B5CF6',      // Violet
+    // Primary accent (purple - matches web)
+    primary: '#7C3AED',         // Primary purple
+    primaryLight: '#8B5CF6',    // Lighter purple
+    primaryDark: '#6D28D9',     // Darker purple
+
+    // Accent alias
+    accent: '#8B5CF6',
     accentLight: '#A78BFA',
     accentDark: '#7C3AED',
 
-    // Status colors
-    success: '#10B981',
+    // Status colors (matches web)
+    success: '#10B981',         // Green
     successLight: '#34D399',
-    warning: '#F59E0B',
+    successBg: 'rgba(16, 185, 129, 0.15)',
+
+    warning: '#F59E0B',         // Orange/Yellow
     warningLight: '#FBBF24',
-    error: '#EF4444',
+    warningBg: 'rgba(245, 158, 11, 0.15)',
+
+    error: '#EF4444',           // Red
     errorLight: '#F87171',
+    errorBg: 'rgba(239, 68, 68, 0.15)',
 
     // Input/form colors
-    inputBackground: '#1F2937',
-    inputBorder: '#374151',
-    inputFocusBorder: '#8B5CF6',
+    inputBackground: '#1A1A2E',
+    inputBorder: '#2D2D44',
+    inputFocusBorder: '#7C3AED',
 
     // Other
     white: '#FFFFFF',
     black: '#000000',
     transparent: 'transparent',
+
+    // Overlay
+    overlay: 'rgba(0, 0, 0, 0.5)',
 };
 
 export const spacing = {
@@ -45,10 +58,10 @@ export const spacing = {
 };
 
 export const borderRadius = {
-    sm: 4,
-    md: 8,
-    lg: 12,
-    xl: 16,
+    sm: 6,
+    md: 10,
+    lg: 14,
+    xl: 18,
     full: 9999,
 };
 
@@ -60,4 +73,12 @@ export const fontSize = {
     xl: 20,
     xxl: 24,
     xxxl: 32,
+    hero: 40,
+};
+
+export const fontWeight = {
+    normal: '400' as const,
+    medium: '500' as const,
+    semibold: '600' as const,
+    bold: '700' as const,
 };

@@ -1,29 +1,25 @@
-// Input Component
+// Input Component - Matches Web UI
 import React from 'react';
 import {
-    TextInput,
     View,
+    TextInput,
     Text,
     StyleSheet,
     TextInputProps,
-    ViewStyle
+    ViewStyle,
 } from 'react-native';
-import { colors, spacing, borderRadius, fontSize } from '../theme/colors';
+import { colors, spacing, fontSize, borderRadius } from '../theme/colors';
 
 interface InputProps extends TextInputProps {
     label?: string;
     error?: string;
     containerStyle?: ViewStyle;
-    multiline?: boolean;
-    numberOfLines?: number;
 }
 
 export function Input({
     label,
     error,
     containerStyle,
-    multiline = false,
-    numberOfLines = 1,
     ...props
 }: InputProps) {
     return (
@@ -32,17 +28,13 @@ export function Input({
             <TextInput
                 style={[
                     styles.input,
-                    multiline && styles.multiline,
-                    multiline && { minHeight: numberOfLines * 24 + spacing.md * 2 },
+                    props.multiline && styles.multilineInput,
                     error && styles.inputError,
                 ]}
                 placeholderTextColor={colors.textDim}
-                multiline={multiline}
-                numberOfLines={numberOfLines}
-                textAlignVertical={multiline ? 'top' : 'center'}
                 {...props}
             />
-            {error && <Text style={styles.error}>{error}</Text>}
+            {error && <Text style={styles.errorText}>{error}</Text>}
         </View>
     );
 }
@@ -52,9 +44,9 @@ const styles = StyleSheet.create({
         marginBottom: spacing.md,
     },
     label: {
-        color: colors.text,
         fontSize: fontSize.sm,
         fontWeight: '500',
+        color: colors.textSecondary,
         marginBottom: spacing.xs,
     },
     input: {
@@ -63,20 +55,22 @@ const styles = StyleSheet.create({
         borderColor: colors.inputBorder,
         borderRadius: borderRadius.md,
         paddingHorizontal: spacing.md,
-        paddingVertical: spacing.sm,
+        paddingVertical: spacing.md,
         fontSize: fontSize.md,
         color: colors.text,
-        minHeight: 44,
+        minHeight: 48,
     },
-    multiline: {
+    multilineInput: {
+        minHeight: 120,
+        textAlignVertical: 'top',
         paddingTop: spacing.md,
     },
     inputError: {
         borderColor: colors.error,
     },
-    error: {
-        color: colors.error,
+    errorText: {
         fontSize: fontSize.sm,
+        color: colors.error,
         marginTop: spacing.xs,
     },
 });

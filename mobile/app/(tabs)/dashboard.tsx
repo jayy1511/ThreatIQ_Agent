@@ -1,20 +1,20 @@
-// Dashboard Screen - Full Implementation
+// Dashboard Screen - Matches Web UI layout
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, RefreshControl, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, RefreshControl, ScrollView, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Card, Button, Input, Tag, LoadingSpinner } from '../../src/components';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Card, Button, Tag, LoadingSpinner } from '../../src/components';
 import { useAuth } from '../../src/lib/auth';
 import {
     getTodayLesson,
     getLessonProgress,
-    analyzePublic,
+    getProfileSummary,
+    getGmailStatus,
     TodayLesson,
     LessonProgress,
-    AnalysisResponse,
-    ApiError
+    ProfileSummary,
 } from '../../src/lib/api';
-import { colors, spacing, fontSize } from '../../src/theme/colors';
+import { colors, spacing, fontSize, borderRadius } from '../../src/theme/colors';
 
 export default function DashboardScreen() {
     const { user } = useAuth();
@@ -23,27 +23,33 @@ export default function DashboardScreen() {
     const [refreshing, setRefreshing] = useState(false);
     const [lesson, setLesson] = useState<TodayLesson | null>(null);
     const [progress, setProgress] = useState<LessonProgress | null>(null);
-
-    // Quick analyze state
-    const [quickMessage, setQuickMessage] = useState('');
-    const [analyzing, setAnalyzing] = useState(false);
-    const [quickResult, setQuickResult] = useState<AnalysisResponse | null>(null);
+    const [profileSummary, setProfileSummary] = useState<ProfileSummary | null>(null);
+    const [gmailStatus, setGmailStatus] = useState<any>(null);
 
     const loadData = useCallback(async () => {
+        if (!user?.uid) {
+            setLoading(false);
+            return;
+        }
+
         try {
-            const [lessonData, progressData] = await Promise.all([
+            const [lessonData, progressData, summaryData, gmailData] = await Promise.all([
                 getTodayLesson().catch(() => null),
                 getLessonProgress().catch(() => null),
+                getProfileSummary(user.uid).catch(() => null),
+                getGmailStatus().catch(() => ({ connected: false })),
             ]);
             setLesson(lessonData);
             setProgress(progressData);
+            setProfileSummary(summaryData);
+            setGmailStatus(gmailData);
         } catch (err) {
             console.error('Dashboard load error:', err);
         } finally {
             setLoading(false);
             setRefreshing(false);
         }
-    }, []);
+    }, [user?.uid]);
 
     useEffect(() => {
         loadData();
@@ -51,32 +57,10 @@ export default function DashboardScreen() {
 
     const onRefresh = useCallback(() => {
         setRefreshing(true);
-        setQuickResult(null);
         loadData();
     }, [loadData]);
 
-    const handleQuickAnalyze = async () => {
-        if (!quickMessage.trim()) return;
-
-        setAnalyzing(true);
-        try {
-            const result = await analyzePublic(quickMessage);
-            setQuickResult(result);
-        } catch (err) {
-            console.error('Quick analyze error:', err);
-        } finally {
-            setAnalyzing(false);
-        }
-    };
-
-    const getLabelColor = (label: string) => {
-        switch (label.toLowerCase()) {
-            case 'safe': return colors.success;
-            case 'suspicious': return colors.warning;
-            case 'phishing': return colors.error;
-            default: return colors.textMuted;
-        }
-    };
+    const accuracy = profileSummary?.accuracy ?? 0;
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
@@ -87,25 +71,34 @@ export default function DashboardScreen() {
                     <RefreshControl
                         refreshing={refreshing}
                         onRefresh={onRefresh}
-                        tintColor={colors.accent}
+                        tintColor={colors.primary}
                     />
                 }
                 showsVerticalScrollIndicator={false}
             >
-                <Text style={styles.title}>Dashboard</Text>
-                <Text style={styles.greeting}>
-                    Welcome back{user?.email ? `, ${user.email.split('@')[0]}` : ''}!
-                </Text>
+                {/* Header */}
+                <View style={styles.header}>
+                    <Text style={styles.greeting}>Welcome back,</Text>
+                    <Text style={styles.userName}>
+                        {user?.email?.split('@')[0] || 'User'}
+                    </Text>
+                </View>
 
                 {loading ? (
                     <LoadingSpinner />
                 ) : (
                     <>
-                        {/* Stats Row */}
-                        <View style={styles.statsRow}>
+                        {/* Stats Grid (matches web layout) */}
+                        <View style={styles.statsGrid}>
                             <Card style={styles.statCard}>
-                                <Text style={styles.statValue}>{progress?.xp_total || 0}</Text>
-                                <Text style={styles.statLabel}>XP</Text>
+                                <Text style={styles.statValue}>{profileSummary?.total_analyzed || 0}</Text>
+                                <Text style={styles.statLabel}>Total Analyzed</Text>
+                            </Card>
+                            <Card style={styles.statCard}>
+                                <Text style={[styles.statValue, { color: colors.success }]}>
+                                    {Math.round(accuracy)}%
+                                </Text>
+                                <Text style={styles.statLabel}>Accuracy</Text>
                             </Card>
                             <Card style={styles.statCard}>
                                 <Text style={[styles.statValue, { color: colors.warning }]}>
@@ -114,113 +107,161 @@ export default function DashboardScreen() {
                                 <Text style={styles.statLabel}>🔥 Streak</Text>
                             </Card>
                             <Card style={styles.statCard}>
-                                <Text style={[styles.statValue, { color: colors.accent }]}>
+                                <Text style={[styles.statValue, { color: colors.primary }]}>
                                     {progress?.level || 1}
                                 </Text>
                                 <Text style={styles.statLabel}>Level</Text>
                             </Card>
                         </View>
 
-                        {/* Daily Lesson Card */}
-                        <Card
-                            variant={lesson && !lesson.already_completed ? 'accent' : 'default'}
+                        {/* XP Progress (matches web) */}
+                        {progress && (
+                            <Card style={styles.xpCard}>
+                                <View style={styles.xpHeader}>
+                                    <Text style={styles.xpTitle}>⭐ Experience Points</Text>
+                                    <Text style={styles.xpValue}>{progress.xp_total} XP</Text>
+                                </View>
+                                <View style={styles.xpBar}>
+                                    <View
+                                        style={[
+                                            styles.xpFill,
+                                            { width: `${Math.min((progress.xp_total % 500) / 5, 100)}%` }
+                                        ]}
+                                    />
+                                </View>
+                                <Text style={styles.xpNext}>
+                                    {500 - (progress.xp_total % 500)} XP to next level
+                                </Text>
+                            </Card>
+                        )}
+
+                        {/* Daily Lesson Card (prominent like web) */}
+                        <TouchableOpacity
+                            activeOpacity={0.8}
                             onPress={() => router.push('/(tabs)/lessons')}
                         >
-                            <View style={styles.cardHeader}>
-                                <Text style={styles.cardEmoji}>📚</Text>
-                                <View style={styles.cardHeaderText}>
-                                    <Text style={styles.cardTitle}>Daily Lesson</Text>
-                                    {lesson?.already_completed ? (
-                                        <Text style={styles.completedText}>✅ Completed today!</Text>
-                                    ) : (
-                                        <Text style={styles.pendingText}>Ready to learn</Text>
-                                    )}
+                            <Card
+                                variant={lesson && !lesson.already_completed ? 'accent' : 'default'}
+                                style={styles.lessonCard}
+                            >
+                                <View style={styles.lessonHeader}>
+                                    <View style={styles.lessonIcon}>
+                                        <Text style={styles.lessonEmoji}>📚</Text>
+                                    </View>
+                                    <View style={styles.lessonInfo}>
+                                        <Text style={styles.lessonTitle}>Daily Lesson</Text>
+                                        {lesson?.already_completed ? (
+                                            <Tag label="✅ Completed" variant="success" size="sm" />
+                                        ) : (
+                                            <Tag label="Ready" variant="accent" size="sm" />
+                                        )}
+                                    </View>
+                                </View>
+
+                                {lesson?.lesson && (
+                                    <Text style={styles.lessonPreview} numberOfLines={2}>
+                                        {lesson.lesson.title}
+                                    </Text>
+                                )}
+
+                                <Button
+                                    title={lesson?.already_completed ? "Review Lesson" : "Start Learning"}
+                                    onPress={() => router.push('/(tabs)/lessons')}
+                                    variant={lesson?.already_completed ? "secondary" : "primary"}
+                                    fullWidth
+                                />
+                            </Card>
+                        </TouchableOpacity>
+
+                        {/* Gmail Integration Card */}
+                        <Card style={styles.gmailCard}>
+                            <View style={styles.gmailHeader}>
+                                <Text style={styles.gmailEmoji}>📧</Text>
+                                <View style={styles.gmailInfo}>
+                                    <Text style={styles.gmailTitle}>Gmail Integration</Text>
+                                    <Text style={styles.gmailStatus}>
+                                        {gmailStatus?.connected ? 'Connected' : 'Not connected'}
+                                    </Text>
+                                </View>
+                                <View style={[
+                                    styles.statusDot,
+                                    gmailStatus?.connected ? styles.statusConnected : styles.statusDisconnected
+                                ]} />
+                            </View>
+                            <Text style={styles.gmailDesc}>
+                                Scan your inbox for potential phishing emails
+                            </Text>
+                            <Button
+                                title="Coming Soon"
+                                variant="secondary"
+                                fullWidth
+                                disabled
+                            />
+                        </Card>
+
+                        {/* Progress & Stats Card */}
+                        <Card>
+                            <Text style={styles.sectionTitle}>📊 Progress & Stats</Text>
+
+                            {/* Weekly Activity */}
+                            {progress?.last_7_days && (
+                                <View style={styles.weekActivity}>
+                                    <Text style={styles.weekLabel}>This Week</Text>
+                                    <View style={styles.weekDots}>
+                                        {progress.last_7_days.map((day, i) => (
+                                            <View key={i} style={styles.dayColumn}>
+                                                <View style={[
+                                                    styles.dayDot,
+                                                    day.completed && styles.dayDotCompleted
+                                                ]} />
+                                                <Text style={styles.dayLabel}>
+                                                    {new Date(day.date).toLocaleDateString('en', { weekday: 'narrow' })}
+                                                </Text>
+                                            </View>
+                                        ))}
+                                    </View>
+                                </View>
+                            )}
+
+                            <View style={styles.statsRow}>
+                                <View style={styles.statsItem}>
+                                    <Text style={styles.statsItemValue}>{profileSummary?.correct || 0}</Text>
+                                    <Text style={styles.statsItemLabel}>Correct</Text>
+                                </View>
+                                <View style={styles.statsItem}>
+                                    <Text style={styles.statsItemValue}>{profileSummary?.incorrect || 0}</Text>
+                                    <Text style={styles.statsItemLabel}>Incorrect</Text>
+                                </View>
+                                <View style={styles.statsItem}>
+                                    <Text style={styles.statsItemValue}>{progress?.lessons_completed || 0}</Text>
+                                    <Text style={styles.statsItemLabel}>Lessons</Text>
                                 </View>
                             </View>
 
-                            {lesson?.lesson && (
-                                <Text style={styles.lessonPreview} numberOfLines={2}>
-                                    {lesson.lesson.title}
-                                </Text>
-                            )}
-
                             <Button
-                                title={lesson?.already_completed ? "Review" : "Start Lesson"}
-                                onPress={() => router.push('/(tabs)/lessons')}
-                                variant={lesson?.already_completed ? "outline" : "primary"}
-                                fullWidth
-                                style={styles.cardButton}
-                            />
-                        </Card>
-
-                        {/* Quick Analyze Card */}
-                        <Card>
-                            <Text style={styles.cardTitle}>🔍 Quick Analyze</Text>
-                            <Text style={styles.cardDescription}>
-                                Paste a suspicious message to check for phishing
-                            </Text>
-
-                            <Input
-                                placeholder="Paste message here..."
-                                value={quickMessage}
-                                onChangeText={(text) => {
-                                    setQuickMessage(text);
-                                    if (quickResult) setQuickResult(null);
-                                }}
-                                multiline
-                                numberOfLines={3}
-                                containerStyle={styles.quickInput}
-                            />
-
-                            {quickResult && (
-                                <View style={styles.quickResult}>
-                                    <View style={styles.quickResultRow}>
-                                        <Text style={styles.quickResultLabel}>Result:</Text>
-                                        <Tag
-                                            label={quickResult.classification.label.toUpperCase()}
-                                            variant={
-                                                quickResult.classification.label === 'safe' ? 'success' :
-                                                    quickResult.classification.label === 'suspicious' ? 'warning' : 'error'
-                                            }
-                                        />
-                                    </View>
-                                    <Text style={styles.quickConfidence}>
-                                        {Math.round(quickResult.classification.confidence * 100)}% confidence
-                                    </Text>
-                                </View>
-                            )}
-
-                            <Button
-                                title={analyzing ? "Analyzing..." : "Analyze"}
-                                onPress={handleQuickAnalyze}
-                                loading={analyzing}
-                                disabled={!quickMessage.trim()}
+                                title="View Full Profile"
                                 variant="outline"
                                 fullWidth
-                            />
-
-                            <Button
-                                title="Full Analysis →"
-                                onPress={() => router.push('/(tabs)/analyze')}
-                                variant="ghost"
-                                fullWidth
-                                style={styles.fullAnalysisButton}
-                            />
-                        </Card>
-
-                        {/* Recent Activity Placeholder */}
-                        <Card>
-                            <Text style={styles.cardTitle}>📈 Recent Activity</Text>
-                            <Text style={styles.emptyText}>
-                                Your recent analyses and lessons will appear here
-                            </Text>
-                            <Button
-                                title="View Profile"
                                 onPress={() => router.push('/(tabs)/profile')}
-                                variant="ghost"
-                                fullWidth
                             />
                         </Card>
+
+                        {/* Quick Analyze CTA */}
+                        <TouchableOpacity
+                            activeOpacity={0.8}
+                            onPress={() => router.push('/(tabs)/analyze')}
+                        >
+                            <Card variant="accent" style={styles.analyzeCta}>
+                                <Text style={styles.ctaEmoji}>🔍</Text>
+                                <View style={styles.ctaContent}>
+                                    <Text style={styles.ctaTitle}>Analyze a Message</Text>
+                                    <Text style={styles.ctaSubtitle}>
+                                        Check if an email or SMS is a phishing attempt
+                                    </Text>
+                                </View>
+                                <Text style={styles.ctaArrow}>→</Text>
+                            </Card>
+                        </TouchableOpacity>
                     </>
                 )}
             </ScrollView>
@@ -240,26 +281,28 @@ const styles = StyleSheet.create({
         padding: spacing.md,
         paddingBottom: spacing.xxl,
     },
-    title: {
-        fontSize: fontSize.xxxl,
-        fontWeight: 'bold',
-        color: colors.text,
-        marginBottom: spacing.xs,
+    header: {
+        marginBottom: spacing.lg,
     },
     greeting: {
         fontSize: fontSize.md,
         color: colors.textMuted,
-        marginBottom: spacing.lg,
     },
-    statsRow: {
+    userName: {
+        fontSize: fontSize.xxxl,
+        fontWeight: 'bold',
+        color: colors.text,
+    },
+    statsGrid: {
         flexDirection: 'row',
+        flexWrap: 'wrap',
         gap: spacing.sm,
         marginBottom: spacing.md,
     },
     statCard: {
-        flex: 1,
+        width: '48%',
         alignItems: 'center',
-        paddingVertical: spacing.md,
+        paddingVertical: spacing.lg,
     },
     statValue: {
         fontSize: fontSize.xxl,
@@ -271,76 +314,195 @@ const styles = StyleSheet.create({
         color: colors.textMuted,
         marginTop: spacing.xs,
     },
-    cardHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
+    xpCard: {
         marginBottom: spacing.md,
     },
-    cardEmoji: {
-        fontSize: 32,
-        marginRight: spacing.md,
+    xpHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: spacing.sm,
     },
-    cardHeaderText: {
-        flex: 1,
-    },
-    cardTitle: {
+    xpTitle: {
         fontSize: fontSize.lg,
         fontWeight: '600',
         color: colors.text,
     },
-    completedText: {
-        fontSize: fontSize.sm,
-        color: colors.success,
-        marginTop: 2,
+    xpValue: {
+        fontSize: fontSize.lg,
+        fontWeight: 'bold',
+        color: colors.primary,
     },
-    pendingText: {
+    xpBar: {
+        height: 12,
+        backgroundColor: colors.inputBackground,
+        borderRadius: 6,
+        overflow: 'hidden',
+        marginBottom: spacing.xs,
+    },
+    xpFill: {
+        height: '100%',
+        backgroundColor: colors.primary,
+        borderRadius: 6,
+    },
+    xpNext: {
         fontSize: fontSize.sm,
-        color: colors.accent,
-        marginTop: 2,
+        color: colors.textMuted,
+    },
+    lessonCard: {
+        marginBottom: spacing.md,
+    },
+    lessonHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: spacing.md,
+    },
+    lessonIcon: {
+        width: 48,
+        height: 48,
+        borderRadius: 12,
+        backgroundColor: colors.primaryLight + '20',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: spacing.md,
+    },
+    lessonEmoji: {
+        fontSize: 24,
+    },
+    lessonInfo: {
+        flex: 1,
+        gap: spacing.xs,
+    },
+    lessonTitle: {
+        fontSize: fontSize.lg,
+        fontWeight: '600',
+        color: colors.text,
     },
     lessonPreview: {
         fontSize: fontSize.md,
         color: colors.textSecondary,
         marginBottom: spacing.md,
     },
-    cardDescription: {
-        fontSize: fontSize.sm,
-        color: colors.textMuted,
+    gmailCard: {
         marginBottom: spacing.md,
     },
-    cardButton: {
-        marginTop: spacing.xs,
-    },
-    quickInput: {
-        marginBottom: spacing.sm,
-    },
-    quickResult: {
-        backgroundColor: colors.inputBackground,
-        padding: spacing.md,
-        borderRadius: 8,
-        marginBottom: spacing.md,
-    },
-    quickResultRow: {
+    gmailHeader: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: spacing.sm,
+        marginBottom: spacing.sm,
     },
-    quickResultLabel: {
+    gmailEmoji: {
+        fontSize: 32,
+        marginRight: spacing.md,
+    },
+    gmailInfo: {
+        flex: 1,
+    },
+    gmailTitle: {
+        fontSize: fontSize.lg,
+        fontWeight: '600',
+        color: colors.text,
+    },
+    gmailStatus: {
         fontSize: fontSize.sm,
         color: colors.textMuted,
     },
-    quickConfidence: {
+    statusDot: {
+        width: 12,
+        height: 12,
+        borderRadius: 6,
+    },
+    statusConnected: {
+        backgroundColor: colors.success,
+    },
+    statusDisconnected: {
+        backgroundColor: colors.textMuted,
+    },
+    gmailDesc: {
         fontSize: fontSize.sm,
         color: colors.textMuted,
-        marginTop: spacing.xs,
+        marginBottom: spacing.md,
     },
-    fullAnalysisButton: {
-        marginTop: spacing.sm,
+    sectionTitle: {
+        fontSize: fontSize.lg,
+        fontWeight: '600',
+        color: colors.text,
+        marginBottom: spacing.md,
     },
-    emptyText: {
+    weekActivity: {
+        marginBottom: spacing.md,
+    },
+    weekLabel: {
         fontSize: fontSize.sm,
         color: colors.textMuted,
-        textAlign: 'center',
-        marginVertical: spacing.md,
+        marginBottom: spacing.sm,
+    },
+    weekDots: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+    },
+    dayColumn: {
+        alignItems: 'center',
+    },
+    dayDot: {
+        width: 16,
+        height: 16,
+        borderRadius: 8,
+        backgroundColor: colors.inputBackground,
+        marginBottom: 4,
+    },
+    dayDotCompleted: {
+        backgroundColor: colors.success,
+    },
+    dayLabel: {
+        fontSize: fontSize.xs,
+        color: colors.textMuted,
+    },
+    statsRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        paddingVertical: spacing.md,
+        borderTopWidth: 1,
+        borderTopColor: colors.cardBorder,
+        marginBottom: spacing.md,
+    },
+    statsItem: {
+        alignItems: 'center',
+    },
+    statsItemValue: {
+        fontSize: fontSize.xl,
+        fontWeight: 'bold',
+        color: colors.text,
+    },
+    statsItemLabel: {
+        fontSize: fontSize.sm,
+        color: colors.textMuted,
+        marginTop: 2,
+    },
+    analyzeCta: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: spacing.lg,
+    },
+    ctaEmoji: {
+        fontSize: 32,
+        marginRight: spacing.md,
+    },
+    ctaContent: {
+        flex: 1,
+    },
+    ctaTitle: {
+        fontSize: fontSize.lg,
+        fontWeight: '600',
+        color: colors.text,
+    },
+    ctaSubtitle: {
+        fontSize: fontSize.sm,
+        color: colors.textMuted,
+        marginTop: 2,
+    },
+    ctaArrow: {
+        fontSize: 24,
+        color: colors.primary,
     },
 });
