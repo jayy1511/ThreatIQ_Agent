@@ -4,6 +4,7 @@ Analysis Router - Gateway endpoints that call Analysis Service
 This router handles:
 - /api/analyze (authenticated) - Full analysis with history
 - /api/analyze-public (public) - Analysis without history
+- /api/analysis-service/health - Health proxy for mobile cold-start detection
 """
 
 from fastapi import APIRouter, HTTPException, Depends
@@ -12,23 +13,28 @@ from app.routers.auth import verify_firebase_token
 from app.config import settings
 import httpx
 import logging
+import asyncio
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
+# Retry configuration for Render cold starts
+MAX_RETRIES = 5
+RETRY_DELAYS = [2, 4, 8, 16, 20]  # Exponential backoff (seconds)
+RETRYABLE_STATUS_CODES = {502, 503, 504}
+REQUEST_TIMEOUT = 120.0  # Increased for cold starts
 
-async def call_analysis_service(message: str, user_guess: str = None, learning_context: dict = None) -> dict:
+
+async def call_analysis_service_with_retry(
+    message: str, 
+    user_guess: str = None, 
+    learning_context: dict = None
+) -> dict:
     """
-    Call the analysis-service to get analysis results.
+    Call the analysis-service with retry logic for Render cold starts.
     
-    Args:
-        message: Message to analyze
-        user_guess: Optional user prediction
-        learning_context: Optional user learning context
-        
-    Returns:
-        Analysis result from the service
+    Implements exponential backoff for 502/503/504 errors and timeouts.
     """
     payload = {
         "message": message,
@@ -36,31 +42,123 @@ async def call_analysis_service(message: str, user_guess: str = None, learning_c
         "learning_context": learning_context
     }
     
-    try:
-        async with httpx.AsyncClient(timeout=60.0) as client:
-            response = await client.post(
-                f"{settings.analysis_service_url}/analyze",
-                json=payload
-            )
+    last_error = None
+    
+    for attempt in range(MAX_RETRIES):
+        try:
+            logger.info(f"Analysis service call attempt {attempt + 1}/{MAX_RETRIES}")
             
-            if response.status_code != 200:
+            async with httpx.AsyncClient(timeout=REQUEST_TIMEOUT) as client:
+                response = await client.post(
+                    f"{settings.analysis_service_url}/analyze",
+                    json=payload
+                )
+                
+                # Success
+                if response.status_code == 200:
+                    logger.info(f"Analysis service succeeded on attempt {attempt + 1}")
+                    return response.json()
+                
+                # Retryable error (cold start)
+                if response.status_code in RETRYABLE_STATUS_CODES:
+                    logger.warning(
+                        f"Analysis service returned {response.status_code} on attempt {attempt + 1}, "
+                        f"likely cold start - will retry"
+                    )
+                    last_error = f"Service returned {response.status_code}"
+                    
+                    if attempt < MAX_RETRIES - 1:
+                        delay = RETRY_DELAYS[min(attempt, len(RETRY_DELAYS) - 1)]
+                        logger.info(f"Waiting {delay}s before retry...")
+                        await asyncio.sleep(delay)
+                        continue
+                
+                # Non-retryable error
                 logger.error(f"Analysis service returned {response.status_code}: {response.text}")
                 raise HTTPException(
                     status_code=502,
                     detail=f"Analysis service error: {response.status_code}"
                 )
+                
+        except httpx.TimeoutException:
+            logger.warning(f"Analysis service timeout on attempt {attempt + 1}")
+            last_error = "Request timeout"
             
-            return response.json()
+            if attempt < MAX_RETRIES - 1:
+                delay = RETRY_DELAYS[min(attempt, len(RETRY_DELAYS) - 1)]
+                logger.info(f"Waiting {delay}s before retry...")
+                await asyncio.sleep(delay)
+                continue
+                
+        except httpx.ConnectError:
+            logger.warning(f"Cannot connect to analysis service on attempt {attempt + 1}")
+            last_error = "Connection failed"
             
+            if attempt < MAX_RETRIES - 1:
+                delay = RETRY_DELAYS[min(attempt, len(RETRY_DELAYS) - 1)]
+                logger.info(f"Waiting {delay}s before retry...")
+                await asyncio.sleep(delay)
+                continue
+                
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected error on attempt {attempt + 1}: {e}")
+            last_error = str(e)
+            
+            if attempt < MAX_RETRIES - 1:
+                delay = RETRY_DELAYS[min(attempt, len(RETRY_DELAYS) - 1)]
+                await asyncio.sleep(delay)
+                continue
+    
+    # All retries exhausted
+    logger.error(f"All {MAX_RETRIES} attempts failed. Last error: {last_error}")
+    raise HTTPException(
+        status_code=502,
+        detail="Analysis service warming up, please retry in 30 seconds"
+    )
+
+
+@router.get("/analysis-service/health")
+async def analysis_service_health():
+    """
+    Health proxy to check if analysis service is ready.
+    Used by mobile to detect cold starts before calling analyze.
+    """
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.get(f"{settings.analysis_service_url}/")
+            
+            if response.status_code == 200:
+                return {
+                    "status": "ready",
+                    "analysis_service": response.json()
+                }
+            else:
+                return {
+                    "status": "warming_up",
+                    "message": f"Service returned {response.status_code}",
+                    "retry_after_seconds": 30
+                }
+                
     except httpx.TimeoutException:
-        logger.error("Analysis service timeout")
-        raise HTTPException(status_code=504, detail="Analysis service timeout")
+        return {
+            "status": "warming_up",
+            "message": "Service timeout - cold start in progress",
+            "retry_after_seconds": 30
+        }
     except httpx.ConnectError:
-        logger.error("Cannot connect to analysis service")
-        raise HTTPException(status_code=503, detail="Analysis service unavailable")
+        return {
+            "status": "unavailable",
+            "message": "Cannot connect to analysis service",
+            "retry_after_seconds": 60
+        }
     except Exception as e:
-        logger.error(f"Error calling analysis service: {e}")
-        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+        return {
+            "status": "error",
+            "message": str(e),
+            "retry_after_seconds": 30
+        }
 
 
 @router.post("/analyze", response_model=AnalysisResponse)
@@ -88,8 +186,8 @@ async def analyze_message(
         from app.agents.memory import memory_agent
         learning_context = await memory_agent.get_learning_context(request.user_id)
         
-        # Call analysis service
-        result = await call_analysis_service(
+        # Call analysis service with retry
+        result = await call_analysis_service_with_retry(
             message=request.message,
             user_guess=request.user_guess,
             learning_context=learning_context
@@ -144,8 +242,8 @@ async def analyze_message_public(request: AnalysisRequest):
     try:
         logger.info("Public analysis request (no auth)")
         
-        # Call analysis service without learning context
-        result = await call_analysis_service(
+        # Call analysis service with retry (no learning context)
+        result = await call_analysis_service_with_retry(
             message=request.message,
             user_guess=request.user_guess,
             learning_context=None

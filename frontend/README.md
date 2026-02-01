@@ -29,6 +29,8 @@ frontend/
 │   │   ├── lessons/today/     # Daily micro-lesson
 │   │   ├── history/           # Analysis history
 │   │   ├── profile/           # User profile
+│   │   ├── progress/          # Learning progress stats
+│   │   ├── gmail/             # Gmail OAuth callback
 │   │   └── layout.tsx         # Root layout with providers
 │   ├── components/
 │   │   ├── Navbar.tsx         # Navigation header
@@ -85,6 +87,8 @@ NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
 | `/lessons/today` | Daily micro-lesson with quiz | Yes |
 | `/history` | Past analysis results | Yes |
 | `/profile` | User stats and weak spots | Yes |
+| `/progress` | Learning progress and XP stats | Yes |
+| `/gmail/callback` | Gmail OAuth callback handler | No |
 
 ## Features
 
