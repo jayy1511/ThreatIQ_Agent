@@ -33,7 +33,7 @@ export default function SignupPage() {
     try {
       await signInWithGoogle();
       router.push("/dashboard");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Signup error:", err);
       setError("Failed to create account with Google. Please try again.");
     } finally {
@@ -67,7 +67,7 @@ export default function SignupPage() {
     try {
       await signUpWithEmail(email, password);
       router.push("/dashboard");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Email signup error:", err);
       setError(
         "Failed to create account with email. This email may already be in use or invalid."

@@ -26,10 +26,41 @@ import { analyzeMessage, analyzePublicMessage } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
 
+interface SimilarExample {
+  category: string;
+  similarity: number;
+  message: string;
+}
+
+interface QuizData {
+  question: string;
+  options: string[];
+  correct_answer: string;
+}
+
+interface CoachResponse {
+  explanation: string;
+  tips: string[];
+  similar_examples: SimilarExample[];
+  quiz: QuizData | null;
+}
+
+interface Classification {
+  label: string;
+  confidence: number;
+  explanation: string;
+  reason_tags: string[];
+}
+
+interface AnalysisResult {
+  classification: Classification;
+  coach_response: CoachResponse;
+}
+
 export default function AnalyzePage() {
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [userGuess, setUserGuess] = useState<'phishing' | 'safe' | null>(null);
   const [quizAnswer, setQuizAnswer] = useState<{ selected: string | null, isCorrect: boolean | null }>({ selected: null, isCorrect: null });
@@ -59,8 +90,8 @@ export default function AnalyzePage() {
 
       try {
         data = await analyzeMessage(message, guessToSend, user.uid);
-      } catch (err: any) {
-        const status = err.response?.status;
+      } catch (err: unknown) {
+        const status = (err as { response?: { status?: number } }).response?.status;
 
         // Only fall back to public endpoint for auth errors (401/403)
         // Do NOT fallback for 500 errors - those indicate real problems
@@ -78,12 +109,12 @@ export default function AnalyzePage() {
 
       setResult(data);
       setQuizAnswer({ selected: null, isCorrect: null }); // Reset quiz for new analysis
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Analysis failed:', err);
       setResult(null);
 
       // Handle different error types
-      if (err.response?.status === 429) {
+      if ((err as { response?: { status?: number } }).response?.status === 429) {
         setError('Quota gratuite atteinte. Réessaie plus tard.');
       } else {
         setError('Analysis failed. Please try again in a moment.');
@@ -321,7 +352,7 @@ export default function AnalyzePage() {
                         </CardHeader>
                         <CardContent className="space-y-4">
                           {result.coach_response.similar_examples.map(
-                            (ex: any, i: number) => (
+                            (ex: SimilarExample, i: number) => (
                               <div key={i} className="border p-3 rounded-md">
                                 <div className="flex justify-between items-center mb-2">
                                   <Badge variant="outline">{ex.category}</Badge>
@@ -354,7 +385,7 @@ export default function AnalyzePage() {
                                 {result.coach_response.quiz.options.map(
                                   (option: string, i: number) => {
                                     const isSelected = quizAnswer.selected === option;
-                                    const isCorrectOption = option === result.coach_response.quiz.correct_answer;
+                                    const isCorrectOption = option === result.coach_response.quiz?.correct_answer;
                                     const showResult = quizAnswer.selected !== null;
 
                                     return (
@@ -369,7 +400,7 @@ export default function AnalyzePage() {
                                             : ''
                                           }`}
                                         onClick={() => {
-                                          const correct = option === result.coach_response.quiz.correct_answer;
+                                          const correct = option === result.coach_response.quiz?.correct_answer;
                                           setQuizAnswer({ selected: option, isCorrect: correct });
                                         }}
                                       >
