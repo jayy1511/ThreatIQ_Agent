@@ -1,16 +1,11 @@
 ﻿'use client';
 
-import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Shield, Lock, Zap, CheckCircle, AlertTriangle, ArrowRight } from 'lucide-react';
-import { analyzePublicMessage } from '@/lib/api';
+import { Shield, Lock, Zap, CheckCircle, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
-import { useAuth } from '@/context/AuthContext';
 
 export default function Home() {
-  const { user } = useAuth();
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -44,7 +39,7 @@ export default function Home() {
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold tracking-tight mb-4">Why ThreatIQ?</h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Our multi-agent system doesn't just detect threats—it explains them, helping you build long-term security awareness.
+              Our multi-agent system doesn&apos;t just detect threats—it explains them, helping you build long-term security awareness.
             </p>
           </div>
 

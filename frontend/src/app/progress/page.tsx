@@ -34,11 +34,28 @@ interface LessonProgress {
     lessons_completed: number;
 }
 
+interface CategoryStats {
+    seen: number;
+    mistakes: number;
+}
+
+interface AnalysisSummary {
+    total_analyzed: number;
+    accuracy: number;
+    categories_seen: number;
+}
+
+interface UserProfile {
+    total_messages: number;
+    correct_guesses: number;
+    by_category: Record<string, CategoryStats>;
+}
+
 export default function ProgressPage() {
     const { user } = useAuth();
     const [lessonProgress, setLessonProgress] = useState<LessonProgress | null>(null);
-    const [summary, setSummary] = useState<any>(null);
-    const [profile, setProfile] = useState<any>(null);
+    const [summary, setSummary] = useState<AnalysisSummary | null>(null);
+    const [profile, setProfile] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -76,7 +93,7 @@ export default function ProgressPage() {
     const categoryData =
         profile?.by_category
             ? Object.entries(profile.by_category).map(
-                ([name, stats]: [string, any]) => ({
+                ([name, stats]: [string, CategoryStats]) => ({
                     name: name.replace('_', ' '),
                     seen: stats.seen,
                     mistakes: stats.mistakes,
@@ -159,8 +176,8 @@ export default function ProgressPage() {
                                     <div key={idx} className="flex flex-col items-center flex-1">
                                         <div
                                             className={`w-12 h-12 rounded-full flex items-center justify-center text-sm font-medium ${day.completed
-                                                    ? 'bg-green-500 text-white'
-                                                    : 'bg-muted text-muted-foreground'
+                                                ? 'bg-green-500 text-white'
+                                                : 'bg-muted text-muted-foreground'
                                                 }`}
                                         >
                                             {day.completed ? <CheckCircle2 className="h-6 w-6" /> : day.day_name.charAt(0)}

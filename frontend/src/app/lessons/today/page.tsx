@@ -6,7 +6,7 @@ import { getTodayLesson, completeLesson, getLessonProgress } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { CheckCircle2, XCircle, Flame, Trophy, BookOpen, ArrowLeft, Sparkles } from "lucide-react";
@@ -90,7 +90,7 @@ export default function TodayLessonPage() {
                     correct_answers: []
                 });
             }
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error("Error fetching lesson:", err);
             setError("Failed to load today's lesson");
         } finally {
@@ -136,7 +136,7 @@ export default function TodayLessonPage() {
             const result = await completeLesson(lessonData.lesson.lesson_id, answers);
             setResult(result);
             setCurrentSection("results");
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error("Error submitting quiz:", err);
             setError("Failed to submit quiz");
         } finally {
@@ -204,7 +204,7 @@ export default function TodayLessonPage() {
                         <h1 className="text-2xl font-bold">{lesson.title}</h1>
                         <div className="flex items-center gap-2 mt-1">
                             <Badge className={getTopicColor(lesson.topic)}>{lesson.topic}</Badge>
-                            <span className="text-sm text-muted-foreground">Today's Lesson</span>
+                            <span className="text-sm text-muted-foreground">Today&apos;s Lesson</span>
                         </div>
                     </div>
                 </div>

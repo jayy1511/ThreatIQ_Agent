@@ -32,7 +32,7 @@ export default function LoginPage() {
         try {
             await signInWithGoogle();
             router.push("/dashboard");
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error("Login error:", err);
             setError("Failed to sign in with Google. Please try again.");
         } finally {
@@ -54,7 +54,7 @@ export default function LoginPage() {
         try {
             await signInWithEmail(email, password);
             router.push("/dashboard");
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error("Email login error:", err);
             setError(
                 "Failed to sign in with email and password. Please check your credentials."

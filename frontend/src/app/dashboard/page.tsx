@@ -32,9 +32,16 @@ interface TodayLessonData {
   already_completed: boolean;
 }
 
+interface DashboardSummary {
+  total_analyzed: number;
+  accuracy: number;
+  categories_seen: number;
+  weak_spots: string[];
+}
+
 export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth();
-  const [summary, setSummary] = useState<any>(null);
+  const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [lessonProgress, setLessonProgress] = useState<LessonProgress | null>(null);
   const [todayLesson, setTodayLesson] = useState<TodayLessonData | null>(null);
   const [gmailConnected, setGmailConnected] = useState(false);
@@ -258,7 +265,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Weak Spots Alert */}
-        {summary?.weak_spots?.length > 0 && (
+        {summary && summary.weak_spots && summary.weak_spots.length > 0 && (
           <Card className="mt-8">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">

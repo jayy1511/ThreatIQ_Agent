@@ -60,7 +60,7 @@ export default function LessonsPage() {
 
                     // Build set of completed lesson IDs
                     if (progressData?.lessons_completed_list) {
-                        setCompletedIds(new Set(progressData.lessons_completed_list.map((l: any) => l.lesson_id)));
+                        setCompletedIds(new Set(progressData.lessons_completed_list.map((l: { lesson_id: string }) => l.lesson_id)));
                     }
                 } catch (error) {
                     console.error('Error fetching lessons data:', error);
