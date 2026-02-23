@@ -141,6 +141,42 @@ docker-compose up --build
 | Storage | Encrypted tokens, MongoDB TLS |
 | API | Rate limiting, CORS, input validation |
 
+## Evaluation Pipeline
+
+Automated quality assurance using [DeepEval](https://docs.confident-ai.com/) with pytest integration and Gemini LLM-as-judge.
+
+### Architecture
+
+```
+eval/
+├── data/          # Test datasets (golden_set.json, sample_set.json)
+├── tests/         # Pytest test files + conftest fixtures
+├── lib/           # GeminiModel wrapper (DeepEvalBaseLLM)
+└── results/       # Git-ignored output files
+```
+
+### Testing Strategy
+
+| Layer | Method | Details |
+|-------|--------|---------|
+| **Deterministic** | Label matching, accuracy/precision/recall thresholds | No API key, runs in CI always |
+| **LLM-as-Judge** | DeepEval GEval with Gemini as evaluator | Scores explanation quality, classification correctness |
+| **Stub Mode** | Keyword heuristic baseline | Fast, offline, ~50% accuracy baseline |
+| **Live Mode** | Calls real Analysis Service | Measures actual system performance |
+
+### Test Data
+
+| Dataset | Size | Purpose |
+|---------|------|---------|
+| `golden_set.json` | 40 items (20 phishing + 20 safe) | Regression — every item must match |
+| `sample_set.json` | 200 items (diverse categories) | Benchmark — aggregate accuracy |
+
+### CI Integration
+
+- **Always runs:** `pytest -k "not geval"` (43 deterministic tests)
+- **If `GEMINI_API_KEY` secret available:** Full DeepEval suite with LLM-judge
+- Uses `gemini-2.0-flash-lite` to avoid quota conflicts with the analysis service (`gemini-2.0-flash`)
+
 ---
 
 ## Tech Stack Summary
@@ -153,4 +189,6 @@ docker-compose up --build
 | **Auth** | Firebase Authentication |
 | **Database** | MongoDB Atlas (Motor async driver) |
 | **Mobile** | Expo, React Native, expo-router |
+| **Evaluation** | DeepEval, pytest, Gemini LLM-as-judge |
 | **DevOps** | Docker, GitHub Actions CI, Vercel, Render |
+

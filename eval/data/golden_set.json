@@ -1,0 +1,391 @@
+[
+    {
+        "id": "gs_001",
+        "text": "Dear Customer, We have detected unauthorized access to your bank account. Please verify your identity immediately by clicking this link: http://secure-banking-verify.com/auth. Failure to act within 24 hours will result in account suspension.",
+        "label": "phishing",
+        "expected_reason_tags": [
+            "urgent_language",
+            "suspicious_link",
+            "impersonation"
+        ],
+        "must_include_phrases": [
+            "verify",
+            "suspicious"
+        ]
+    },
+    {
+        "id": "gs_002",
+        "text": "CONGRATULATIONS! You have been selected as the winner of our $1,000,000 sweepstakes! Click here to claim your prize NOW: http://free-prize-claim.xyz/winner. This offer expires in 1 hour!",
+        "label": "phishing",
+        "expected_reason_tags": [
+            "too_good_to_be_true",
+            "urgent_language",
+            "suspicious_link"
+        ],
+        "must_include_phrases": [
+            "scam",
+            "prize"
+        ]
+    },
+    {
+        "id": "gs_003",
+        "text": "Hi Team, Just a reminder that the quarterly review meeting has been moved to Thursday at 2 PM in Conference Room B. Please bring your project updates. Thanks, Sarah",
+        "label": "safe"
+    },
+    {
+        "id": "gs_004",
+        "text": "Your Netflix subscription payment was declined. Update your payment method now to avoid service interruption: http://netflix-billing-update.com/pay. If you do not update within 48 hours, your account will be closed.",
+        "label": "phishing",
+        "expected_reason_tags": [
+            "impersonation",
+            "urgent_language",
+            "suspicious_link"
+        ],
+        "must_include_phrases": [
+            "suspicious",
+            "phishing"
+        ]
+    },
+    {
+        "id": "gs_005",
+        "text": "Hello, I wanted to follow up on our conversation from last week about the marketing campaign. Could you send me the revised budget spreadsheet when you get a chance? Thanks, Michael",
+        "label": "safe"
+    },
+    {
+        "id": "gs_006",
+        "text": "URGENT: Your Apple ID has been locked due to suspicious activity. Verify your account now at http://apple-id-secure.com/verify or lose all your data. You must act within 12 hours.",
+        "label": "phishing",
+        "expected_reason_tags": [
+            "impersonation",
+            "urgent_language",
+            "suspicious_link",
+            "fear_threat"
+        ],
+        "must_include_phrases": [
+            "phishing",
+            "suspicious"
+        ]
+    },
+    {
+        "id": "gs_007",
+        "text": "Hey! Are we still on for coffee tomorrow at 10? I found a great new place near the office called Bean Counter. Let me know!",
+        "label": "safe"
+    },
+    {
+        "id": "gs_008",
+        "text": "Dear Valued Customer, Your Amazon order #38291-XK has been delayed. To reschedule delivery, please confirm your shipping address and payment details at: http://amzn-delivery-confirm.net/order",
+        "label": "phishing",
+        "expected_reason_tags": [
+            "impersonation",
+            "suspicious_link",
+            "request_personal_info"
+        ],
+        "must_include_phrases": [
+            "suspicious",
+            "link"
+        ]
+    },
+    {
+        "id": "gs_009",
+        "text": "The project deadline has been extended to March 15th. Please make sure all documentation is updated and submitted through the internal portal by then. Regards, Project Management Office",
+        "label": "safe"
+    },
+    {
+        "id": "gs_010",
+        "text": "ALERT: We noticed a login from an unknown device in Russia on your Gmail account. If this wasn't you, secure your account immediately: http://google-secure-login.com/alert. Your account may be compromised!",
+        "label": "phishing",
+        "expected_reason_tags": [
+            "impersonation",
+            "urgent_language",
+            "suspicious_link",
+            "fear_threat"
+        ],
+        "must_include_phrases": [
+            "suspicious",
+            "phishing"
+        ]
+    },
+    {
+        "id": "gs_011",
+        "text": "Hi everyone, The software update for version 3.2 will be deployed this weekend during the maintenance window (Saturday 2-6 AM). No action needed from your side. IT Support",
+        "label": "safe"
+    },
+    {
+        "id": "gs_012",
+        "text": "Dear Employee, HR needs you to update your direct deposit information urgently due to a system migration. Please fill out this form: http://hr-payroll-update.com/form and include your bank account number and routing number.",
+        "label": "phishing",
+        "expected_reason_tags": [
+            "impersonation",
+            "urgent_language",
+            "request_personal_info",
+            "suspicious_link"
+        ],
+        "must_include_phrases": [
+            "suspicious",
+            "personal information"
+        ]
+    },
+    {
+        "id": "gs_013",
+        "text": "Your monthly electricity bill of $127.43 is ready. You can view and pay your bill through your online account at duke-energy.com or call us at 1-800-777-9898.",
+        "label": "safe"
+    },
+    {
+        "id": "gs_014",
+        "text": "I am Prince Adewale from Nigeria. My late father left $15.5 million in a bank account. I need your help to transfer this money and will give you 30% as commission. Please send your full name, address, and bank details to proceed.",
+        "label": "phishing",
+        "expected_reason_tags": [
+            "too_good_to_be_true",
+            "request_personal_info",
+            "advance_fee_scam"
+        ],
+        "must_include_phrases": [
+            "scam"
+        ]
+    },
+    {
+        "id": "gs_015",
+        "text": "Reminder: Your dentist appointment is scheduled for Monday, March 3rd at 9:30 AM. Please arrive 15 minutes early to complete paperwork. Call 555-0123 to reschedule.",
+        "label": "safe"
+    },
+    {
+        "id": "gs_016",
+        "text": "Your FedEx package (tracking #7829301) could not be delivered. A delivery fee of $2.99 is required. Pay now to reschedule: http://fedex-redelivery-fee.com/pay",
+        "label": "phishing",
+        "expected_reason_tags": [
+            "impersonation",
+            "suspicious_link",
+            "small_fee_trick"
+        ],
+        "must_include_phrases": [
+            "suspicious",
+            "phishing"
+        ]
+    },
+    {
+        "id": "gs_017",
+        "text": "Good morning, Please find attached the Q4 financial report as discussed in yesterday's meeting. Let me know if you have any questions. Best, Jennifer - Finance Department",
+        "label": "safe"
+    },
+    {
+        "id": "gs_018",
+        "text": "IMPORTANT: Your Microsoft 365 password expires today. Click here to keep your current password: http://ms365-password-reset.com/keep. If you don't act now, you'll be locked out of your account.",
+        "label": "phishing",
+        "expected_reason_tags": [
+            "impersonation",
+            "urgent_language",
+            "suspicious_link"
+        ],
+        "must_include_phrases": [
+            "phishing",
+            "password"
+        ]
+    },
+    {
+        "id": "gs_019",
+        "text": "Hi, I saw your resume on LinkedIn and think you'd be a great fit for a Senior Developer role at our company. Would you be available for a 30-minute call this week to discuss? Best, Tom - TechCorp Recruiting",
+        "label": "safe"
+    },
+    {
+        "id": "gs_020",
+        "text": "Your PayPal account has been limited. We noticed unusual spending patterns. Log in to restore full access: http://paypal-restore-access.com/verify. Failure to verify will result in permanent restriction.",
+        "label": "phishing",
+        "expected_reason_tags": [
+            "impersonation",
+            "urgent_language",
+            "suspicious_link",
+            "fear_threat"
+        ],
+        "must_include_phrases": [
+            "suspicious",
+            "phishing"
+        ]
+    },
+    {
+        "id": "gs_021",
+        "text": "Just wanted to let you know that the kids' soccer practice has been moved to Field 3 this Saturday due to maintenance on Field 1. Same time, 10 AM. See you there!",
+        "label": "safe"
+    },
+    {
+        "id": "gs_022",
+        "text": "FINAL WARNING: Your tax return has an issue. The IRS requires immediate verification of your Social Security Number and date of birth. Call 1-888-555-0199 or visit http://irs-tax-verify.com NOW to avoid legal action.",
+        "label": "phishing",
+        "expected_reason_tags": [
+            "impersonation",
+            "urgent_language",
+            "fear_threat",
+            "request_personal_info"
+        ],
+        "must_include_phrases": [
+            "scam",
+            "government"
+        ]
+    },
+    {
+        "id": "gs_023",
+        "text": "Thank you for your order! Your receipt for the purchase of 'Clean Code' by Robert C. Martin ($29.99) is attached. Estimated delivery: March 7-10. - Amazon.com",
+        "label": "safe"
+    },
+    {
+        "id": "gs_024",
+        "text": "Hey, this is your CEO Mark. I need you to purchase $500 in Google Play gift cards for a client meeting and send me the codes ASAP. This is urgent and confidential. Don't tell anyone else.",
+        "label": "phishing",
+        "expected_reason_tags": [
+            "impersonation",
+            "urgent_language",
+            "gift_card_scam",
+            "authority_pressure"
+        ],
+        "must_include_phrases": [
+            "scam",
+            "gift card"
+        ]
+    },
+    {
+        "id": "gs_025",
+        "text": "The weekly newsletter from TechCrunch: Top stories this week include the latest AI developments, startup funding rounds, and a deep dive into quantum computing advances. Read more at techcrunch.com",
+        "label": "safe"
+    },
+    {
+        "id": "gs_026",
+        "text": "SECURITY ALERT: Someone tried to access your Instagram account from a new device. If this was not you, click here to secure your account: http://instagram-security-check.xyz/protect. Act now before it's too late!",
+        "label": "phishing",
+        "expected_reason_tags": [
+            "impersonation",
+            "urgent_language",
+            "suspicious_link"
+        ],
+        "must_include_phrases": [
+            "suspicious",
+            "phishing"
+        ]
+    },
+    {
+        "id": "gs_027",
+        "text": "Hi, The landlord confirmed that the plumber will come by the apartment on Wednesday between 9 AM and 12 PM to fix the kitchen faucet. Can you be home? - Roommate",
+        "label": "safe"
+    },
+    {
+        "id": "gs_028",
+        "text": "Your Dropbox storage is 95% full. To avoid losing your files, upgrade your plan with a special 80% discount - only $1.99/month! Click here: http://dropbox-upgrade-deal.com/special",
+        "label": "phishing",
+        "expected_reason_tags": [
+            "impersonation",
+            "suspicious_link",
+            "too_good_to_be_true"
+        ],
+        "must_include_phrases": [
+            "suspicious"
+        ]
+    },
+    {
+        "id": "gs_029",
+        "text": "Class is cancelled for tomorrow due to the professor being ill. We will have a make-up session next Tuesday at the same time. Check the course portal for updated readings.",
+        "label": "safe"
+    },
+    {
+        "id": "gs_030",
+        "text": "Wire transfer notification: You have received $3,450.00 from SMITH ENTERPRISE LLC. However, we need to verify your identity before releasing funds. Reply with your full name, address, and SSN.",
+        "label": "phishing",
+        "expected_reason_tags": [
+            "too_good_to_be_true",
+            "request_personal_info"
+        ],
+        "must_include_phrases": [
+            "suspicious",
+            "personal information"
+        ]
+    },
+    {
+        "id": "gs_031",
+        "text": "Thanks for subscribing to our gym! Your membership starts on March 1st. Download our app to book classes and track your workouts. Welcome to FitLife!",
+        "label": "safe"
+    },
+    {
+        "id": "gs_032",
+        "text": "We detected a virus on your computer! Call Microsoft Support immediately at 1-888-555-0177 to remove it. Do NOT turn off your computer or you will lose all your data. Your Windows license may be invalid.",
+        "label": "phishing",
+        "expected_reason_tags": [
+            "impersonation",
+            "fear_threat",
+            "tech_support_scam"
+        ],
+        "must_include_phrases": [
+            "scam"
+        ]
+    },
+    {
+        "id": "gs_033",
+        "text": "Hello, Your flight AA1234 from New York to Los Angeles on March 5th has been confirmed. Check-in opens 24 hours before departure at aa.com. Have a great trip!",
+        "label": "safe"
+    },
+    {
+        "id": "gs_034",
+        "text": "Your WhatsApp will expire soon! WhatsApp now costs $0.99/year. Click this link to pay and extend your subscription: http://whatsapp-renew.com/pay. Forward this to 10 friends to get it free!",
+        "label": "phishing",
+        "expected_reason_tags": [
+            "impersonation",
+            "suspicious_link",
+            "misinformation"
+        ],
+        "must_include_phrases": [
+            "scam",
+            "fake"
+        ]
+    },
+    {
+        "id": "gs_035",
+        "text": "Lunch order for today's team meeting has been placed. We're getting sushi from Sakura. If you have any dietary restrictions I missed, let me know by 11 AM. - Admin",
+        "label": "safe"
+    },
+    {
+        "id": "gs_036",
+        "text": "URGENT! Your crypto wallet has been compromised. Transfer your Bitcoin to this secure wallet address immediately to protect your assets: bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh. Do not delay or your funds will be stolen!",
+        "label": "phishing",
+        "expected_reason_tags": [
+            "urgent_language",
+            "fear_threat",
+            "crypto_scam"
+        ],
+        "must_include_phrases": [
+            "scam"
+        ]
+    },
+    {
+        "id": "gs_037",
+        "text": "Hey! Just finished reading the book you recommended, 'Atomic Habits'. Really enjoyed it. Do you have any other suggestions? Would love to discuss over lunch this week.",
+        "label": "safe"
+    },
+    {
+        "id": "gs_038",
+        "text": "Your DHL shipment is on hold due to an unpaid customs fee of €4.50. Pay now to release your package: http://dhl-customs-clearance.com/pay. Reference: DHL-8834921",
+        "label": "phishing",
+        "expected_reason_tags": [
+            "impersonation",
+            "suspicious_link",
+            "small_fee_trick"
+        ],
+        "must_include_phrases": [
+            "suspicious",
+            "phishing"
+        ]
+    },
+    {
+        "id": "gs_039",
+        "text": "Good afternoon, I'm writing to confirm your hotel reservation at the Grand Plaza from March 10-13. Your confirmation number is GP-44821. Please present valid photo ID at check-in.",
+        "label": "safe"
+    },
+    {
+        "id": "gs_040",
+        "text": "You've been selected for a work-from-home job earning $500/day! No experience needed. Just provide your name, address, and bank details to get started: http://easy-home-jobs.com/apply. Limited spots available!",
+        "label": "phishing",
+        "expected_reason_tags": [
+            "too_good_to_be_true",
+            "request_personal_info",
+            "suspicious_link"
+        ],
+        "must_include_phrases": [
+            "scam"
+        ]
+    }
+]

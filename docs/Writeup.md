@@ -25,7 +25,7 @@ Using **agents** with clear responsibilities is closer to how a real system shou
 - An **Evidence Agent** searches a phishing dataset and returns similar examples/categories.
 - A **Memory Agent** manages user profiles/history, so the system adapts over time.
 - A **Coach Agent** turns the data into explanations, tips, and a quiz.
-- An **Evaluation Agent** audits decisions later to measure quality.
+- An **Evaluation Agent** audits decisions using a DeepEval pipeline with Gemini LLM-as-judge to score classification correctness and explanation quality.
 
 For Gmail integration, I added service layers that behave like agents in the broader architecture:
 - **OAuth Service**: secure token exchange + refresh.
@@ -127,7 +127,7 @@ Overall loop: each analysis gives a verdict and updates the user’s learning pr
 
 ### If I had more time, this is what I'd do
 
-- Larger benchmark evaluation and confidence calibration.
+- Expand evaluation benchmarks further (more test categories, edge cases).
 - More personalized coaching (adaptive quizzes, learning paths).
 - Browser extension for one-click analysis.
 - Team mode with privacy-safe aggregated stats.

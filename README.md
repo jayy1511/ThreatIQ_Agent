@@ -58,6 +58,10 @@ ThreatIQ_Agent/
 │   └── app/data/            # Lessons content
 ├── services/
 │   └── analysis-service/    # Stateless AI microservice (port 8010)
+├── eval/                     # Evaluation & testing pipeline
+│   ├── data/                # Golden set (40) + sample set (200)
+│   ├── tests/               # Pytest + DeepEval test suites
+│   └── lib/                 # Gemini LLM-judge wrapper
 ├── mobile/                   # Expo React Native app
 │   ├── app/                 # Expo Router screens
 │   └── src/                 # Components, lib, theme
@@ -185,8 +189,40 @@ NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
 GitHub Actions runs on every push/PR:
 - **Frontend:** `npm ci` → `npm run lint` → `npm run build`
 - **Backend:** `pip install` → `python -m compileall` → `pytest`
+- **Evaluation:** Deterministic tests (always) + DeepEval LLM-judge (if `GEMINI_API_KEY` secret is set)
 
 Deployment auto-triggers on `main` branch merge.
+
+## Evaluation Pipeline
+
+Automated quality assurance using [DeepEval](https://docs.confident-ai.com/) with pytest integration.
+
+### Run Tests
+```bash
+# Deterministic tests (no API key needed, instant)
+cd eval
+pytest -k "not geval" -v
+
+# Full suite with LLM-as-judge (needs Gemini API key)
+$env:GEMINI_API_KEY="your-key"    # Windows
+python -m pytest -v
+```
+
+### What It Tests
+
+| Test Type | What It Checks | API Key? |
+|-----------|---------------|----------|
+| **Label Match** (40 tests) | Each golden-set item classified correctly | No |
+| **Accuracy Threshold** | Overall accuracy above baseline | No |
+| **Confidence Range** | All scores between 0–1 | No |
+| **Error Check** | No classification errors | No |
+| **GEval Explanation Quality** | LLM judges if explanations are specific and educational | Yes |
+| **GEval Classification Correctness** | LLM judges if decisions are sound | Yes |
+| **GEval Batch Quality** | LLM judges overall classification quality | Yes |
+
+> Uses `gemini-2.0-flash-lite` for LLM-judge to avoid quota conflicts with the analysis service.
+
+See [`eval/README.md`](eval/README.md) for full details.
 
 ## Deployment
 
