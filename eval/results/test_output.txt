@@ -1,0 +1,55 @@
+﻿============================= test session starts =============================
+platform win32 -- Python 3.12.2, pytest-7.4.3, pluggy-1.3.0 -- C:\Users\jay15\AppData\Local\Programs\Python\Python312\python.exe
+cachedir: .pytest_cache
+rootdir: C:\JAY\EPITA\My Projects\Web Dev\MERN\ThreatIQ_Agent\eval
+configfile: pytest.ini
+testpaths: tests
+collecting ... collected 48 items / 3 deselected / 45 selected
+
+tests/test_classification.py::test_stub_accuracy_threshold PASSED        [  2%]
+tests/test_classification.py::test_no_errors PASSED                      [  4%]
+tests/test_classification.py::test_confidence_range PASSED               [  6%]
+tests/test_classification.py::test_phishing_recall SKIPPED (Precisio...) [  8%]
+tests/test_classification.py::test_safe_precision SKIPPED (Precision...) [ 11%]
+tests/test_regression.py::test_label_match[gs_001] PASSED                [ 13%]
+tests/test_regression.py::test_label_match[gs_002] PASSED                [ 15%]
+tests/test_regression.py::test_label_match[gs_003] PASSED                [ 17%]
+tests/test_regression.py::test_label_match[gs_004] PASSED                [ 20%]
+tests/test_regression.py::test_label_match[gs_005] PASSED                [ 22%]
+tests/test_regression.py::test_label_match[gs_006] PASSED                [ 24%]
+tests/test_regression.py::test_label_match[gs_007] PASSED                [ 26%]
+tests/test_regression.py::test_label_match[gs_008] PASSED                [ 28%]
+tests/test_regression.py::test_label_match[gs_009] PASSED                [ 31%]
+tests/test_regression.py::test_label_match[gs_010] PASSED                [ 33%]
+tests/test_regression.py::test_label_match[gs_011] PASSED                [ 35%]
+tests/test_regression.py::test_label_match[gs_012] PASSED                [ 37%]
+tests/test_regression.py::test_label_match[gs_013] PASSED                [ 40%]
+tests/test_regression.py::test_label_match[gs_014] PASSED                [ 42%]
+tests/test_regression.py::test_label_match[gs_015] PASSED                [ 44%]
+tests/test_regression.py::test_label_match[gs_016] PASSED                [ 46%]
+tests/test_regression.py::test_label_match[gs_017] PASSED                [ 48%]
+tests/test_regression.py::test_label_match[gs_018] PASSED                [ 51%]
+tests/test_regression.py::test_label_match[gs_019] PASSED                [ 53%]
+tests/test_regression.py::test_label_match[gs_020] PASSED                [ 55%]
+tests/test_regression.py::test_label_match[gs_021] PASSED                [ 57%]
+tests/test_regression.py::test_label_match[gs_022] PASSED                [ 60%]
+tests/test_regression.py::test_label_match[gs_023] PASSED                [ 62%]
+tests/test_regression.py::test_label_match[gs_024] PASSED                [ 64%]
+tests/test_regression.py::test_label_match[gs_025] PASSED                [ 66%]
+tests/test_regression.py::test_label_match[gs_026] PASSED                [ 68%]
+tests/test_regression.py::test_label_match[gs_027] PASSED                [ 71%]
+tests/test_regression.py::test_label_match[gs_028] PASSED                [ 73%]
+tests/test_regression.py::test_label_match[gs_029] PASSED                [ 75%]
+tests/test_regression.py::test_label_match[gs_030] PASSED                [ 77%]
+tests/test_regression.py::test_label_match[gs_031] PASSED                [ 80%]
+tests/test_regression.py::test_label_match[gs_032] PASSED                [ 82%]
+tests/test_regression.py::test_label_match[gs_033] PASSED                [ 84%]
+tests/test_regression.py::test_label_match[gs_034] PASSED                [ 86%]
+tests/test_regression.py::test_label_match[gs_035] PASSED                [ 88%]
+tests/test_regression.py::test_label_match[gs_036] PASSED                [ 91%]
+tests/test_regression.py::test_label_match[gs_037] PASSED                [ 93%]
+tests/test_regression.py::test_label_match[gs_038] PASSED                [ 95%]
+tests/test_regression.py::test_label_match[gs_039] PASSED                [ 97%]
+tests/test_regression.py::test_label_match[gs_040] PASSED                [100%]
+
+================= 43 passed, 2 skipped, 3 deselected in 0.10s =================

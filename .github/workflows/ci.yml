@@ -136,4 +136,33 @@ jobs:
           fi
         continue-on-error: false
 
+  # ──────────────────────────────────────────────
+  # Evaluation (DeepEval + pytest)
+  # ──────────────────────────────────────────────
+  evaluation:
+    name: Evaluation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install eval dependencies
+        run: pip install -r eval/requirements.txt
+
+      - name: Run deterministic tests (no API key)
+        working-directory: eval
+        run: pytest -k "not geval" -v
+
+      - name: Run DeepEval GEval tests (if key available)
+        if: env.GEMINI_API_KEY != ''
+        working-directory: eval
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: deepeval test run tests/ -v
 
