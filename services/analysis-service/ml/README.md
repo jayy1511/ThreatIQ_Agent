@@ -23,6 +23,11 @@ cd services/analysis-service/ml
 python train_classifier.py
 ```
 
+Optional arguments for performance tuning:
+```bash
+python train_classifier.py --max_features 10000 --C 1.0 --seed 42
+```
+
 ### Evaluate
 
 ```bash
