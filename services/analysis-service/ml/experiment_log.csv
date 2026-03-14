@@ -1,0 +1,2 @@
+run_id,timestamp,model,max_features,C,random_seed,validation_f1,notes
+38623786,2026-03-14T15:34:13,LogisticRegression,5000,1.0,42,0.9836,baseline

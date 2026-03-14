@@ -1,4 +1,8 @@
 import os
+import random
+import csv
+import uuid
+from datetime import datetime
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
@@ -10,6 +14,14 @@ import joblib
 SEED = 42
 DATA_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "phishing_dataset.csv")
 ARTIFACTS_DIR = os.path.join(os.path.dirname(__file__), "artifacts")
+EXPERIMENT_LOG = os.path.join(os.path.dirname(__file__), "experiment_log.csv")
+
+LOG_COLUMNS = ["run_id", "timestamp", "model", "max_features", "C", "random_seed", "validation_f1", "notes"]
+
+
+def set_seeds(seed):
+    random.seed(seed)
+    np.random.seed(seed)
 
 
 def load_data(path):
@@ -72,23 +84,49 @@ def save_artifacts(model, vectorizer, output_dir=ARTIFACTS_DIR):
     print(f"Vectorizer saved to {vec_path}")
 
 
+def log_experiment(run_id, max_features, C, seed, val_f1, notes=""):
+    file_exists = os.path.exists(EXPERIMENT_LOG)
+    with open(EXPERIMENT_LOG, "a", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=LOG_COLUMNS)
+        if not file_exists:
+            writer.writeheader()
+        writer.writerow({
+            "run_id": run_id,
+            "timestamp": datetime.now().isoformat(timespec="seconds"),
+            "model": "LogisticRegression",
+            "max_features": max_features,
+            "C": C,
+            "random_seed": seed,
+            "validation_f1": f"{val_f1:.4f}",
+            "notes": notes,
+        })
+    print(f"Experiment logged to {EXPERIMENT_LOG}")
+
+
 def main():
-    np.random.seed(SEED)
+    seed = SEED
+    max_features = 5000
+    C = 1.0
+
+    set_seeds(seed)
+    run_id = uuid.uuid4().hex[:8]
 
     print("Loading dataset...")
     df = load_data(DATA_PATH)
     print(f"Dataset: {len(df)} samples ({df['label'].sum()} phishing, {(df['label'] == 0).sum()} legitimate)")
 
-    X_train, X_val, X_test, y_train, y_val, y_test = split_data(df)
+    X_train, X_val, X_test, y_train, y_val, y_test = split_data(df, seed=seed)
     print(f"Split: train={len(X_train)}, val={len(X_val)}, test={len(X_test)}")
 
     print("Training TF-IDF + Logistic Regression...")
-    model, vectorizer = train(X_train, y_train)
+    model, vectorizer = train(X_train, y_train, max_features=max_features, C=C, seed=seed)
 
-    evaluate(model, vectorizer, X_val, y_val, split_name="Validation")
+    metrics = evaluate(model, vectorizer, X_val, y_val, split_name="Validation")
 
     save_artifacts(model, vectorizer)
-    print("Phase 1 training complete.")
+    log_experiment(run_id, max_features, C, seed, metrics["f1"], notes="baseline")
+
+    print("Training complete.")
 
 
 if __name__ == "__main__":

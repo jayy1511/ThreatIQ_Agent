@@ -37,3 +37,23 @@ Saved to `artifacts/` after training:
 |------|-------------|
 | `phishing_model.joblib` | Trained Logistic Regression model |
 | `tfidf_vectorizer.joblib` | Fitted TF-IDF vectorizer |
+
+## Reproducibility
+
+Seeds are set for `random`, `numpy`, and `sklearn` (via `random_state`) to ensure deterministic results. Running `train_classifier.py` with the same seed produces identical metrics.
+
+## Experiment Tracking
+
+Each training run is automatically logged to `experiment_log.csv`:
+
+| Column | Description |
+|--------|-------------|
+| `run_id` | Unique 8-char hex identifier |
+| `timestamp` | ISO-format run time |
+| `model` | Model family used |
+| `max_features` | TF-IDF vocabulary size |
+| `C` | Regularization parameter |
+| `random_seed` | Seed used for reproducibility |
+| `validation_f1` | F1 score on validation set |
+| `notes` | Free-text annotation |
+
