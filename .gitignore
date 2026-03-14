@@ -67,6 +67,9 @@ backend/data/*.csv
 firebase-adminsdk.json
 serviceAccountKey.json
 
+# ML Artifacts
+services/analysis-service/ml/artifacts/
+
 # Misc
 *.tmp
 .vercel
