@@ -58,6 +58,12 @@ ThreatIQ_Agent/
 │   └── app/data/            # Lessons content
 ├── services/
 │   └── analysis-service/    # Stateless AI microservice (port 8010)
+│       └── ml/              # Offline ML training pipeline
+│           ├── train_classifier.py
+│           ├── evaluate_classifier.py
+│           ├── experiment_log.csv
+│           ├── error_analysis.md
+│           └── artifacts/   # Saved model & vectorizer (.gitignored)
 ├── eval/                     # Evaluation & testing pipeline
 │   ├── data/                # Golden set (40) + sample set (200)
 │   ├── tests/               # Pytest + DeepEval test suites
@@ -223,6 +229,30 @@ python -m pytest -v
 > Uses `gemini-2.0-flash-lite` for LLM-judge to avoid quota conflicts with the analysis service.
 
 See [`eval/README.md`](eval/README.md) for full details.
+
+## ML Pipeline
+
+Offline, reproducible ML training pipeline for phishing email classification using classical ML.
+
+### Train & Evaluate
+```bash
+cd services/analysis-service/ml
+python train_classifier.py --max_features 5000 --C 1.0
+python evaluate_classifier.py
+```
+
+### Pipeline Overview
+
+| Component | Description |
+|-----------|-------------|
+| **Model** | TF-IDF + Logistic Regression |
+| **Dataset** | 2,000 emails (balanced), stratified 70/15/15 split |
+| **Reproducibility** | Seeds set for `random`, `numpy`, `sklearn` |
+| **Tracking** | Each run logged to `experiment_log.csv` |
+| **Error Analysis** | Documented in `error_analysis.md` |
+| **Artifacts** | `phishing_model.joblib`, `tfidf_vectorizer.joblib` |
+
+See [`services/analysis-service/ml/README.md`](services/analysis-service/ml/README.md) for full details.
 
 ## Deployment
 

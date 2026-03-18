@@ -40,6 +40,20 @@ ThreatIQ is an AI-powered phishing detection platform with gamified security tra
 | `POST /analyze` | Full AI analysis pipeline |
 | `GET /health` | Health check |
 
+### ML Pipeline (`services/analysis-service/ml/`)
+Offline, reproducible training pipeline for phishing classification:
+
+![ML Pipeline](./diagrams/ml_pipeline.png)
+
+| Component | Details |
+|-----------|---------|
+| **Model** | TF-IDF (max_features=5000) + Logistic Regression (C=1.0) |
+| **Dataset** | 2,000 emails (balanced), stratified 70/15/15 split |
+| **Reproducibility** | Deterministic seeds (`random`, `numpy`, `sklearn`) |
+| **Tracking** | Each run auto-logged to `experiment_log.csv` |
+| **Error Analysis** | Failure modes documented in `error_analysis.md` |
+| **Artifacts** | `phishing_model.joblib`, `tfidf_vectorizer.joblib` |
+
 ### Mobile (Expo React Native)
 - Dark theme matching web UI
 - Firebase email/password auth
@@ -185,7 +199,7 @@ eval/
 |-------|------------|
 | **Frontend** | Next.js 14, TypeScript, TailwindCSS, ShadCN UI, Recharts |
 | **Backend** | FastAPI, Python 3.11, Pydantic |
-| **AI/ML** | Google Gemini API, scikit-learn (TF-IDF) |
+| **AI/ML** | Google Gemini API, scikit-learn (TF-IDF + Logistic Regression), joblib |
 | **Auth** | Firebase Authentication |
 | **Database** | MongoDB Atlas (Motor async driver) |
 | **Mobile** | Expo, React Native, expo-router |
