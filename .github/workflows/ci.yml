@@ -136,6 +136,14 @@ jobs:
           fi
         continue-on-error: false
 
+      - name: Train ML classifier
+        working-directory: services/analysis-service/ml
+        run: python train_classifier.py --max_features 5000 --C 1.0
+
+      - name: Evaluate ML classifier
+        working-directory: services/analysis-service/ml
+        run: python evaluate_classifier.py
+
   # ──────────────────────────────────────────────
   # Evaluation (DeepEval + pytest)
   # ──────────────────────────────────────────────
